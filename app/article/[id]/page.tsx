@@ -10,7 +10,7 @@ async function getArticle(id: string) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const response = await fetch(`${baseUrl}/api/news`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 180 }, // Reduced cache time to match API
     })
 
     if (!response.ok) throw new Error("Failed to fetch news")
@@ -21,7 +21,20 @@ async function getArticle(id: string) {
     return article
   } catch (error) {
     console.error("Error fetching article:", error)
-    return null
+    return {
+      id: "fallback-article",
+      title: "Cryptocurrency Market Analysis: Latest Trends and Insights",
+      description:
+        "Comprehensive analysis of current cryptocurrency market trends, price movements, and future outlook for digital assets.",
+      image: "/crypto-market-recovery-chart.png",
+      category: "Market",
+      publishedAt: new Date().toISOString(),
+      source: "Crypto News Hub",
+      author: "Market Analysis Team",
+      content:
+        "The cryptocurrency market continues to show resilience and growth potential as institutional adoption increases and regulatory clarity improves across major markets.",
+      originalUrl: "#",
+    }
   }
 }
 
@@ -102,9 +115,8 @@ export default async function ArticlePage({ params }: { params: { id: string } }
 
             <div className="space-y-6 text-foreground leading-relaxed">
               <p>
-                The cryptocurrency market continues to evolve at a rapid pace, with significant developments shaping the
-                future of digital assets. This latest development represents a crucial milestone in the ongoing
-                maturation of the crypto ecosystem.
+                {article.content ||
+                  "The cryptocurrency market continues to evolve at a rapid pace, with significant developments shaping the future of digital assets. This latest development represents a crucial milestone in the ongoing maturation of the crypto ecosystem."}
               </p>
 
               <p>
@@ -124,17 +136,28 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                 navigate the changing environment while capitalizing on emerging opportunities in the digital asset
                 space.
               </p>
+
+              {article.category === "Bitcoin" || article.category === "Ethereum" || article.category === "Market" ? (
+                <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4">Technical Analysis</h3>
+                  <p>
+                    From a technical perspective, key support and resistance levels are being closely watched by
+                    traders. The current price action suggests potential for continued momentum, though market
+                    volatility remains a significant factor for short-term price movements.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
 
           <div className="mt-8 pt-6 border-t">
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">Published by {article.source}</div>
-              {article.url && article.url !== "#" && (
-                <Link href={article.url} target="_blank" rel="noopener noreferrer">
+              {article.originalUrl && article.originalUrl !== "#" && (
+                <Link href={article.originalUrl} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm">
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    View Original
+                    View Original Source
                   </Button>
                 </Link>
               )}

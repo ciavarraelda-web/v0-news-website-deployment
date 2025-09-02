@@ -29,16 +29,25 @@ function detectCategory(title: string, description: string): string {
 export async function GET() {
   try {
     const API_KEY = "aa53ba1f151d42f5bac01774e792e9ee"
-    const queries = ["cryptocurrency", "bitcoin", "ethereum", "blockchain", "defi", "crypto market"]
+    const queries = [
+      "cryptocurrency market",
+      "bitcoin price",
+      "ethereum news",
+      "blockchain technology",
+      "defi protocol",
+      "crypto trading",
+    ]
 
-    // Fetch from multiple queries to get diverse crypto news
-    const newsPromises = queries.slice(0, 3).map((query) =>
-      fetch(`https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=10&apiKey=${API_KEY}`, {
-        next: { revalidate: 300 },
-        headers: {
-          "User-Agent": "CryptoNewsHub/1.0",
+    const newsPromises = queries.map((query) =>
+      fetch(
+        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=15&language=en&apiKey=${API_KEY}`,
+        {
+          next: { revalidate: 180 }, // Reduced cache time to 3 minutes for fresher news
+          headers: {
+            "User-Agent": "CryptoNewsHub/1.0",
+          },
         },
-      }),
+      ),
     )
 
     const responses = await Promise.all(newsPromises)
@@ -104,9 +113,9 @@ export async function GET() {
         return cryptoKeywords.some((keyword) => text.includes(keyword))
       })
       .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 20)
-      .map((article: any) => ({
-        id: article.url,
+      .slice(0, 30) // Increased article limit for more content
+      .map((article: any, index: number) => ({
+        id: `article-${Date.now()}-${index}`,
         title: article.title,
         description: article.description,
         image: article.urlToImage,
@@ -115,6 +124,8 @@ export async function GET() {
         url: article.url,
         category: detectCategory(article.title, article.description),
         author: article.author,
+        content: article.content || article.description,
+        originalUrl: article.url,
       }))
 
     return NextResponse.json({
