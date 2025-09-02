@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, ExternalLink, Wifi, WifiOff } from "lucide-react"
+import { Clock, Wifi, WifiOff } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -144,7 +144,7 @@ export async function NewsGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {articles.map((article: any) => (
             <Card key={article.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
-              <Link href={article.url} target="_blank" rel="noopener noreferrer">
+              <Link href={`/article/${article.id}`}>
                 <CardHeader className="p-0">
                   <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                     <Image
@@ -170,7 +170,6 @@ export async function NewsGrid() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{article.source}</span>
-                      <ExternalLink className="h-4 w-4" />
                     </div>
                   </div>
                   {article.author && <div className="mt-2 text-xs text-muted-foreground">By {article.author}</div>}
