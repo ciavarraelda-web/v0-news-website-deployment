@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { TechnicalAnalysis } from "@/components/technical-analysis"
-import { RealtimeCryptoPrices } from "@/components/realtime-crypto-prices"
+import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { AIAnalysis } from "@/components/ai-analysis"
 import { AdBanner } from "@/components/ad-banner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,27 +13,27 @@ export default function AnalysisPage() {
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">Real-Time Crypto Analysis</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">Advanced Market Analysis</h1>
             <p className="text-xl md:text-2xl mb-8 text-purple-100 text-pretty">
-              Live cryptocurrency analysis powered by Coinbase WebSocket data with advanced technical indicators and AI
-              insights
+              AI-powered analysis across Crypto, Forex, and Stocks with advanced technical indicators and smart trading
+              signals
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <Brain className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-                <h3 className="font-semibold mb-2">AI Sentiment Analysis</h3>
-                <p className="text-sm text-purple-100">Real-time market sentiment from news and social data</p>
+                <h3 className="font-semibold mb-2">AI Trading Signals</h3>
+                <p className="text-sm text-purple-100">Smart BUY/SELL/HOLD signals across all markets</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <BarChart3 className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-                <h3 className="font-semibold mb-2">Live Technical Indicators</h3>
-                <p className="text-sm text-purple-100">Real-time RSI, MACD, and SAR from Coinbase Pro</p>
+                <h3 className="font-semibold mb-2">Multi-Market Analysis</h3>
+                <p className="text-sm text-purple-100">Crypto, Forex, and Stocks in one platform</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <Activity className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-                <h3 className="font-semibold mb-2">Live Price Data</h3>
-                <p className="text-sm text-purple-100">WebSocket-powered live prices and spreads</p>
+                <h3 className="font-semibold mb-2">Real-time Updates</h3>
+                <p className="text-sm text-purple-100">Live market analysis updated every 30 seconds</p>
               </div>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default function AnalysisPage() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">67%</p>
+                    <p className="text-2xl font-bold text-green-600">72%</p>
                     <p className="text-sm text-muted-foreground">Market Sentiment</p>
                   </div>
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
@@ -95,7 +95,7 @@ export default function AnalysisPage() {
               </Suspense>
 
               <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
-                <RealtimeCryptoPrices />
+                <AdvancedMarketAnalysis />
               </Suspense>
 
               <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-lg" />}>

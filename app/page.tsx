@@ -3,7 +3,7 @@ import { NewsGrid } from "@/components/news-grid"
 import { AdBanner } from "@/components/ad-banner"
 import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
-import { RealtimeCryptoPrices } from "@/components/realtime-crypto-prices"
+import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { PriceTicker } from "@/components/price-ticker"
 
 export default function HomePage() {
@@ -43,7 +43,7 @@ export default function HomePage() {
           <div className="lg:col-span-1">
             <div className="sticky top-4 space-y-6">
               <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
-                <RealtimeCryptoPrices />
+                <AdvancedMarketAnalysis />
               </Suspense>
 
               <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
