@@ -28,27 +28,34 @@ function detectCategory(title: string, description: string): string {
 
 export async function GET() {
   try {
-    const API_KEY = "aa53ba1f151d42f5bac01774e792e9ee"
-    const queries = [
-      "cryptocurrency market",
-      "bitcoin price",
-      "ethereum news",
-      "blockchain technology",
-      "defi protocol",
-      "crypto trading",
+    const API_KEYS = [
+      "aa53ba1f151d42f5bac01774e792e9ee", // Primary NewsAPI key
+      "pub_916ff56267e04509b505898cb63f5ea7", // Additional NewsAPI key
     ]
 
-    const newsPromises = queries.map((query) =>
-      fetch(
-        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=15&language=en&apiKey=${API_KEY}`,
+    const queries = [
+      "cryptocurrency market",
+      "bitcoin price analysis",
+      "ethereum blockchain",
+      "defi protocol news",
+      "crypto regulation",
+      "blockchain technology",
+      "altcoin trading",
+      "nft marketplace",
+    ]
+
+    const newsPromises = queries.map((query, index) => {
+      const apiKey = API_KEYS[index % API_KEYS.length]
+      return fetch(
+        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=12&language=en&apiKey=${apiKey}`,
         {
-          next: { revalidate: 180 }, // Reduced cache time to 3 minutes for fresher news
+          next: { revalidate: 180 },
           headers: {
             "User-Agent": "CryptoNewsHub/1.0",
           },
         },
-      ),
-    )
+      )
+    })
 
     const responses = await Promise.all(newsPromises)
     console.log(
@@ -108,17 +115,21 @@ export async function GET() {
           "solana",
           "cardano",
           "polygon",
+          "chainlink",
+          "litecoin",
+          "ripple",
+          "ada",
         ]
 
         return cryptoKeywords.some((keyword) => text.includes(keyword))
       })
       .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 30) // Increased article limit for more content
+      .slice(0, 30)
       .map((article: any, index: number) => ({
-        id: `article-${Date.now()}-${index}`,
+        id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Better unique ID generation
         title: article.title,
         description: article.description,
-        image: article.urlToImage,
+        image: article.urlToImage && article.urlToImage !== "null" ? article.urlToImage : null, // Better image validation
         publishedAt: article.publishedAt,
         source: article.source.name,
         url: article.url,
