@@ -1,77 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, ExternalLink } from "lucide-react"
+import { Clock, ExternalLink, Wifi, WifiOff } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
-// This would typically fetch from your News API
 async function getNews() {
-  // Simulated news data - replace with actual News API call
-  return [
-    {
-      id: 1,
-      title: "Bitcoin Reaches New All-Time High Amid Institutional Adoption",
-      description:
-        "Major corporations continue to add Bitcoin to their treasury reserves, driving unprecedented demand and price discovery.",
-      image: "/bitcoin-chart.png",
-      category: "Bitcoin",
-      publishedAt: "2024-01-15T10:30:00Z",
-      source: "CryptoDaily",
-      url: "#",
-    },
-    {
-      id: 2,
-      title: "Ethereum 2.0 Staking Rewards Hit Record Levels",
-      description: "Validators are seeing increased returns as network activity surges and fee structures optimize.",
-      image: "/ethereum-staking.png",
-      category: "Ethereum",
-      publishedAt: "2024-01-15T09:15:00Z",
-      source: "BlockNews",
-      url: "#",
-    },
-    {
-      id: 3,
-      title: "DeFi Protocol Launches Revolutionary Yield Farming Strategy",
-      description: "New automated market maker promises higher yields with reduced impermanent loss risk.",
-      image: "/defi-protocol.png",
-      category: "DeFi",
-      publishedAt: "2024-01-15T08:45:00Z",
-      source: "DeFi Times",
-      url: "#",
-    },
-    {
-      id: 4,
-      title: "NFT Marketplace Sees 300% Surge in Trading Volume",
-      description:
-        "Digital art and collectibles market experiences unprecedented growth as mainstream adoption accelerates.",
-      image: "/nft-marketplace-concept.png",
-      category: "NFTs",
-      publishedAt: "2024-01-15T07:20:00Z",
-      source: "NFT Weekly",
-      url: "#",
-    },
-    {
-      id: 5,
-      title: "Central Bank Digital Currency Pilot Program Expands",
-      description:
-        "Government initiative to test digital currency infrastructure reaches new milestone with broader public participation.",
-      image: "/digital-currency.png",
-      category: "CBDC",
-      publishedAt: "2024-01-15T06:30:00Z",
-      source: "FinTech Today",
-      url: "#",
-    },
-    {
-      id: 6,
-      title: "Layer 2 Solutions Drive Ethereum Scalability Forward",
-      description:
-        "Rollup technologies demonstrate significant improvements in transaction throughput and cost reduction.",
-      image: "/layer-2-ethereum.png",
-      category: "Technology",
-      publishedAt: "2024-01-15T05:45:00Z",
-      source: "Tech Crypto",
-      url: "#",
-    },
-  ]
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/news`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch news")
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching news:", error)
+    // Return empty state if API fails
+    return { articles: [], totalResults: 0, fallback: true }
+  }
 }
 
 function formatTimeAgo(dateString: string) {
@@ -84,55 +32,99 @@ function formatTimeAgo(dateString: string) {
   return `${Math.floor(diffInHours / 24)}d ago`
 }
 
+function getCategoryColor(category: string) {
+  const colors: { [key: string]: string } = {
+    Bitcoin: "bg-orange-100 text-orange-700",
+    Ethereum: "bg-blue-100 text-blue-700",
+    DeFi: "bg-purple-100 text-purple-700",
+    NFTs: "bg-pink-100 text-pink-700",
+    Regulation: "bg-red-100 text-red-700",
+    Mining: "bg-yellow-100 text-yellow-700",
+    Staking: "bg-green-100 text-green-700",
+    Exchange: "bg-indigo-100 text-indigo-700",
+    Altcoins: "bg-teal-100 text-teal-700",
+    Technology: "bg-gray-100 text-gray-700",
+    Market: "bg-emerald-100 text-emerald-700",
+  }
+  return colors[category] || "bg-gray-100 text-gray-700"
+}
+
 export async function NewsGrid() {
-  const news = await getNews()
+  const newsData = await getNews()
+  const { articles, totalResults, fallback, lastUpdated } = newsData
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold">Latest Crypto News</h2>
-        <Badge variant="secondary" className="text-sm">
-          Live Updates
-        </Badge>
+        <div className="flex items-center gap-2">
+          {fallback ? (
+            <Badge variant="outline" className="text-sm flex items-center gap-1">
+              <WifiOff className="h-3 w-3" />
+              Offline Mode
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-sm flex items-center gap-1">
+              <Wifi className="h-3 w-3" />
+              Live Updates
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {news.map((article) => (
-          <Card key={article.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="p-0">
-              <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
-                <Image
-                  src={article.image || "/placeholder.svg"}
-                  alt={article.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute top-3 left-3">
-                  <Badge variant="secondary" className="bg-white/90 text-black">
-                    {article.category}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <CardTitle className="text-lg mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
-                {article.title}
-              </CardTitle>
-              <p className="text-muted-foreground mb-4 line-clamp-3">{article.description}</p>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {formatTimeAgo(article.publishedAt)}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>{article.source}</span>
-                  <ExternalLink className="h-4 w-4" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {lastUpdated && (
+        <div className="text-sm text-muted-foreground">
+          Last updated: {new Date(lastUpdated).toLocaleTimeString()}
+          {totalResults > 0 && ` • ${totalResults} articles`}
+        </div>
+      )}
+
+      {articles.length === 0 ? (
+        <Card className="p-8 text-center">
+          <WifiOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No News Available</h3>
+          <p className="text-muted-foreground">Unable to load crypto news at the moment. Please try again later.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {articles.map((article: any) => (
+            <Card key={article.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
+              <Link href={article.url} target="_blank" rel="noopener noreferrer">
+                <CardHeader className="p-0">
+                  <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
+                    <Image
+                      src={article.image || "/placeholder.svg?height=400&width=600&query=crypto news"}
+                      alt={article.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <Badge className={`${getCategoryColor(article.category)} border-0`}>{article.category}</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <CardTitle className="text-lg mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                    {article.title}
+                  </CardTitle>
+                  <p className="text-muted-foreground mb-4 line-clamp-3">{article.description}</p>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      {formatTimeAgo(article.publishedAt)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>{article.source}</span>
+                      <ExternalLink className="h-4 w-4" />
+                    </div>
+                  </div>
+                  {article.author && <div className="mt-2 text-xs text-muted-foreground">By {article.author}</div>}
+                </CardContent>
+              </Link>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -3,11 +3,17 @@ import { NewsGrid } from "@/components/news-grid"
 import { AdBanner } from "@/components/ad-banner"
 import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
+import { CryptoPrices } from "@/components/crypto-prices"
+import { PriceTicker } from "@/components/price-ticker"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Hero />
+
+      <Suspense fallback={<div className="h-12 bg-muted animate-pulse" />}>
+        <PriceTicker />
+      </Suspense>
 
       {/* Top Banner Ad Space */}
       <div className="container mx-auto px-4 py-4">
@@ -36,6 +42,10 @@ export default function HomePage() {
           {/* Sidebar with Token Ads */}
           <div className="lg:col-span-1">
             <div className="sticky top-4 space-y-6">
+              <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
+                <CryptoPrices />
+              </Suspense>
+
               <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
                 <TokenAds />
               </Suspense>

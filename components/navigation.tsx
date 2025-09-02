@@ -19,6 +19,12 @@ export function Navigation() {
             <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition-colors">
               News
             </Link>
+            <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Analysis
+            </Link>
+            <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Portfolio
+            </Link>
             <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition-colors">
               Advertise
             </Link>
