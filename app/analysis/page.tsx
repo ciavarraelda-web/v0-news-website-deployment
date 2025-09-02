@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { TechnicalAnalysis } from "@/components/technical-analysis"
-import { CryptoPrices } from "@/components/crypto-prices"
+import { RealtimeCryptoPrices } from "@/components/realtime-crypto-prices"
 import { AIAnalysis } from "@/components/ai-analysis"
 import { AdBanner } from "@/components/ad-banner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,9 +13,9 @@ export default function AnalysisPage() {
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">AI-Powered Crypto Analysis</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">Real-Time Crypto Analysis</h1>
             <p className="text-xl md:text-2xl mb-8 text-purple-100 text-pretty">
-              Advanced artificial intelligence meets cryptocurrency analysis with real-time predictions and market
+              Live cryptocurrency analysis powered by Coinbase WebSocket data with advanced technical indicators and AI
               insights
             </p>
 
@@ -27,13 +27,13 @@ export default function AnalysisPage() {
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <BarChart3 className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-                <h3 className="font-semibold mb-2">Technical Indicators</h3>
-                <p className="text-sm text-purple-100">RSI, MACD, and support/resistance levels</p>
+                <h3 className="font-semibold mb-2">Live Technical Indicators</h3>
+                <p className="text-sm text-purple-100">Real-time RSI, MACD, and SAR from Coinbase Pro</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <Activity className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-                <h3 className="font-semibold mb-2">Price Predictions</h3>
-                <p className="text-sm text-purple-100">Machine learning powered price forecasts</p>
+                <h3 className="font-semibold mb-2">Live Price Data</h3>
+                <p className="text-sm text-purple-100">WebSocket-powered live prices and spreads</p>
               </div>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function AnalysisPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-green-500" />
-                  Market Overview
+                  Live Market Overview
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -95,7 +95,7 @@ export default function AnalysisPage() {
               </Suspense>
 
               <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
-                <CryptoPrices />
+                <RealtimeCryptoPrices />
               </Suspense>
 
               <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-lg" />}>

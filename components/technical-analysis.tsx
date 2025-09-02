@@ -1,83 +1,115 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, TrendingDown, BarChart3, Activity, Target, Zap } from "lucide-react"
+import { TrendingUp, TrendingDown, BarChart3, Activity, Target } from "lucide-react"
 import Image from "next/image"
 
-async function getTechnicalAnalysis() {
-  try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+interface RealtimeCryptoData {
+  productId: string
+  price: number
+  change24h: number
+  volume24h: number
+  bid: number
+  ask: number
+  spread: number
+  priceHistory: number[]
+  lastUpdated: string
+}
 
-    const response = await fetch(`${baseUrl}/api/crypto-data`, {
-      next: { revalidate: 300 },
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+function useRealtimeCryptoData() {
+  const [cryptoData, setCryptoData] = useState<Record<string, RealtimeCryptoData>>({})
+  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected")
+  const wsRef = useRef<WebSocket | null>(null)
+  const priceHistoryRef = useRef<Record<string, number[]>>({})
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch technical analysis data: ${response.statusText}`)
+  const cryptoSymbols = ["BTC-USD", "ETH-USD", "ADA-USD", "SOL-USD", "DOT-USD", "DOGE-USD"]
+
+  useEffect(() => {
+    const connectWebSocket = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return
+
+      setConnectionStatus("connecting")
+      wsRef.current = new WebSocket("wss://ws-direct.exchange.coinbase.com")
+
+      wsRef.current.onopen = () => {
+        console.log("[v0] Technical Analysis WebSocket connected")
+        setConnectionStatus("connected")
+
+        const subscribeMessage = {
+          type: "subscribe",
+          channels: [{ name: "ticker", product_ids: cryptoSymbols }],
+        }
+        wsRef.current?.send(JSON.stringify(subscribeMessage))
+      }
+
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type === "ticker" && data.product_id) {
+            const price = Number.parseFloat(data.price)
+            const volume24h = Number.parseFloat(data.volume_24h) || 0
+            const change24h = Number.parseFloat(data.open_24h)
+              ? ((price - Number.parseFloat(data.open_24h)) / Number.parseFloat(data.open_24h)) * 100
+              : 0
+
+            // Update price history for technical analysis
+            if (!priceHistoryRef.current[data.product_id]) {
+              priceHistoryRef.current[data.product_id] = []
+            }
+            priceHistoryRef.current[data.product_id].push(price)
+            if (priceHistoryRef.current[data.product_id].length > 50) {
+              priceHistoryRef.current[data.product_id] = priceHistoryRef.current[data.product_id].slice(-50)
+            }
+
+            setCryptoData((prev) => ({
+              ...prev,
+              [data.product_id]: {
+                productId: data.product_id,
+                price,
+                change24h,
+                volume24h,
+                bid: Number.parseFloat(data.best_bid) || price,
+                ask: Number.parseFloat(data.best_ask) || price,
+                spread:
+                  ((Number.parseFloat(data.best_ask) - Number.parseFloat(data.best_bid)) /
+                    Number.parseFloat(data.best_bid)) *
+                    100 || 0,
+                priceHistory: [...priceHistoryRef.current[data.product_id]],
+                lastUpdated: new Date().toISOString(),
+              },
+            }))
+          }
+        } catch (error) {
+          console.error("[v0] Error parsing technical analysis data:", error)
+        }
+      }
+
+      wsRef.current.onclose = () => {
+        setConnectionStatus("disconnected")
+        setTimeout(connectWebSocket, 5000)
+      }
+
+      wsRef.current.onerror = () => {
+        setConnectionStatus("disconnected")
+      }
     }
 
-    const data = await response.json()
-    return data.markets?.slice(0, 6) || []
-  } catch (error) {
-    console.error("[v0] Error fetching technical analysis:", error)
-    return [
-      {
-        id: "bitcoin",
-        name: "Bitcoin",
-        symbol: "BTC",
-        currentPrice: 43250,
-        priceChangePercentage24h: 2.5,
-        priceChangePercentage7d: 8.2,
-        image: "/bitcoin-concept.png",
-        sparklineIn7d: [
-          40000, 41200, 42100, 41800, 42500, 43100, 42900, 43250, 43400, 43100, 43300, 43250, 43500, 43200,
-        ],
-        low24h: 42800,
-        high24h: 43500,
-        volume24h: 28500000000,
-      },
-      {
-        id: "ethereum",
-        name: "Ethereum",
-        symbol: "ETH",
-        currentPrice: 2650,
-        priceChangePercentage24h: -1.2,
-        priceChangePercentage7d: 5.8,
-        image: "/ethereum-abstract.png",
-        sparklineIn7d: [2500, 2520, 2580, 2600, 2620, 2640, 2630, 2650, 2680, 2630, 2660, 2650, 2670, 2640],
-        low24h: 2620,
-        high24h: 2680,
-        volume24h: 15200000000,
-      },
-      {
-        id: "cardano",
-        name: "Cardano",
-        symbol: "ADA",
-        currentPrice: 0.485,
-        priceChangePercentage24h: 4.2,
-        priceChangePercentage7d: -2.1,
-        image: "/cardano-blockchain.png",
-        sparklineIn7d: [0.45, 0.46, 0.47, 0.48, 0.49, 0.485, 0.48, 0.485, 0.49, 0.487, 0.485, 0.488, 0.485, 0.485],
-        low24h: 0.465,
-        high24h: 0.495,
-        volume24h: 420000000,
-      },
-    ]
-  }
+    connectWebSocket()
+    return () => wsRef.current?.close()
+  }, [])
+
+  return { cryptoData, connectionStatus }
 }
 
 function calculateRSI(prices: number[], period = 14) {
-  if (prices.length < period + 1) return 50
+  if (!prices || prices.length < period + 1) return 50
 
   let gains = 0
   let losses = 0
 
-  // Calculate initial average gain and loss
   for (let i = 1; i <= period; i++) {
     const change = prices[i] - prices[i - 1]
     if (change > 0) gains += change
@@ -87,7 +119,6 @@ function calculateRSI(prices: number[], period = 14) {
   let avgGain = gains / period
   let avgLoss = losses / period
 
-  // Apply smoothing for remaining periods
   for (let i = period + 1; i < prices.length; i++) {
     const change = prices[i] - prices[i - 1]
     const gain = change > 0 ? change : 0
@@ -97,6 +128,7 @@ function calculateRSI(prices: number[], period = 14) {
     avgLoss = (avgLoss * (period - 1) + loss) / period
   }
 
+  if (avgLoss === 0) return 100
   const rs = avgGain / avgLoss
   return 100 - 100 / (1 + rs)
 }
@@ -149,39 +181,36 @@ function calculateParabolicSAR(prices: number[], highs: number[], lows: number[]
   return { sar, trend }
 }
 
-function getTechnicalSignal(coin: any) {
-  const prices = coin.sparklineIn7d || []
-  const highs = prices.map((p: number) => p * 1.02) // Simulated highs
-  const lows = prices.map((p: number) => p * 0.98) // Simulated lows
+function getTechnicalSignal(cryptoData: RealtimeCryptoData) {
+  const prices = cryptoData.priceHistory || []
+  if (prices.length < 10) return { signal: "INSUFFICIENT DATA", color: "text-gray-600", bg: "bg-gray-100" }
 
   const rsi = calculateRSI(prices)
   const macd = calculateMACD(prices)
-  const sar = calculateParabolicSAR(prices, highs, lows)
-  const priceChange24h = coin.priceChangePercentage24h || 0
-  const priceChange7d = coin.priceChangePercentage7d || 0
+  const priceChange24h = cryptoData.change24h || 0
+  const spread = cryptoData.spread || 0
 
   let bullishSignals = 0
   let bearishSignals = 0
 
   // RSI signals
-  if (rsi < 30) bullishSignals++
-  if (rsi > 70) bearishSignals++
+  if (rsi < 30) bullishSignals += 2
+  else if (rsi < 40) bullishSignals += 1
+  if (rsi > 70) bearishSignals += 2
+  else if (rsi > 60) bearishSignals += 1
 
   // MACD signals
-  if (macd.macd > macd.signal && macd.histogram > 0) bullishSignals++
-  if (macd.macd < macd.signal && macd.histogram < 0) bearishSignals++
+  if (macd.macd > macd.signal && macd.histogram > 0) bullishSignals += 2
+  if (macd.macd < macd.signal && macd.histogram < 0) bearishSignals += 2
 
-  // SAR signals
-  if (sar.trend === "bullish") bullishSignals++
-  if (sar.trend === "bearish") bearishSignals++
+  // Price momentum and spread analysis
+  if (priceChange24h > 5) bullishSignals += 1
+  if (priceChange24h < -5) bearishSignals += 1
+  if (spread < 0.1) bullishSignals += 1 // Low spread indicates good liquidity
 
-  // Price momentum
-  if (priceChange24h > 3 && priceChange7d > 5) bullishSignals++
-  if (priceChange24h < -3 && priceChange7d < -5) bearishSignals++
-
-  if (bullishSignals >= 3) return { signal: "STRONG BUY", color: "text-green-700", bg: "bg-green-200" }
+  if (bullishSignals >= 4) return { signal: "STRONG BUY", color: "text-green-700", bg: "bg-green-200" }
   if (bullishSignals >= 2) return { signal: "BUY", color: "text-green-600", bg: "bg-green-100" }
-  if (bearishSignals >= 3) return { signal: "STRONG SELL", color: "text-red-700", bg: "bg-red-200" }
+  if (bearishSignals >= 4) return { signal: "STRONG SELL", color: "text-red-700", bg: "bg-red-200" }
   if (bearishSignals >= 2) return { signal: "SELL", color: "text-red-600", bg: "bg-red-100" }
   return { signal: "HOLD", color: "text-yellow-600", bg: "bg-yellow-100" }
 }
@@ -193,43 +222,65 @@ function formatPrice(price: number) {
   return `$${price.toLocaleString()}`
 }
 
-export async function TechnicalAnalysis() {
-  const coins = await getTechnicalAnalysis()
+export function TechnicalAnalysis() {
+  const { cryptoData, connectionStatus } = useRealtimeCryptoData()
+
+  const cryptoNames: Record<string, { name: string; image: string }> = {
+    "BTC-USD": { name: "Bitcoin", image: "/bitcoin-concept.png" },
+    "ETH-USD": { name: "Ethereum", image: "/ethereum-abstract.png" },
+    "ADA-USD": { name: "Cardano", image: "/cardano-blockchain.png" },
+    "SOL-USD": { name: "Solana", image: "/solana-logo.png" },
+    "DOT-USD": { name: "Polkadot", image: "/polkadot-logo.png" },
+    "DOGE-USD": { name: "Dogecoin", image: "/dogecoin-logo.png" },
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-purple-500" />
-          Advanced Technical Analysis
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">Multi-indicator analysis with RSI, MACD, and Parabolic SAR</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-purple-500" />
+            <CardTitle>Real-Time Technical Analysis</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                connectionStatus === "connected"
+                  ? "bg-green-500"
+                  : connectionStatus === "connecting"
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm text-muted-foreground capitalize">{connectionStatus}</span>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">Live analysis with RSI, MACD, and Parabolic SAR from Coinbase</p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {coins.map((coin: any) => {
-          const prices = coin.sparklineIn7d || []
-          const highs = prices.map((p: number) => p * 1.02)
-          const lows = prices.map((p: number) => p * 0.98)
-
+        {Object.entries(cryptoData).map(([productId, data]) => {
+          const prices = data.priceHistory || []
           const rsi = calculateRSI(prices)
           const macd = calculateMACD(prices)
-          const sar = calculateParabolicSAR(prices, highs, lows)
-          const signal = getTechnicalSignal(coin)
+          const signal = getTechnicalSignal(data)
+          const cryptoInfo = cryptoNames[productId]
+
+          if (!cryptoInfo) return null
 
           return (
-            <div key={coin.id} className="p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+            <div key={productId} className="p-4 rounded-lg border hover:bg-muted/50 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <Image
-                    src={coin.image || "/placeholder.svg"}
-                    alt={`${coin.name} logo`}
+                    src={cryptoInfo.image || "/placeholder.svg"}
+                    alt={`${cryptoInfo.name} logo`}
                     width={32}
                     height={32}
                     className="rounded-full"
                   />
                   <div>
-                    <h4 className="font-semibold text-sm">{coin.name}</h4>
-                    <p className="text-xs text-muted-foreground uppercase">{coin.symbol}</p>
+                    <h4 className="font-semibold text-sm">{cryptoInfo.name}</h4>
+                    <p className="text-xs text-muted-foreground">{productId}</p>
                   </div>
                 </div>
                 <Badge className={`${signal.bg} ${signal.color} border-0`}>{signal.signal}</Badge>
@@ -237,35 +288,31 @@ export async function TechnicalAnalysis() {
 
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Price</p>
-                  <p className="font-semibold text-sm">{formatPrice(coin.currentPrice)}</p>
+                  <p className="text-xs text-muted-foreground">Live Price</p>
+                  <p className="font-semibold text-sm">{formatPrice(data.price)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">24h Change</p>
                   <div
                     className={`flex items-center gap-1 text-sm ${
-                      coin.priceChangePercentage24h >= 0 ? "text-green-600" : "text-red-600"
+                      data.change24h >= 0 ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {coin.priceChangePercentage24h >= 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {Math.abs(coin.priceChangePercentage24h || 0).toFixed(2)}%
+                    {data.change24h >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {Math.abs(data.change24h).toFixed(2)}%
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Volume 24h</p>
-                  <p className="font-semibold text-sm">${(coin.volume24h / 1000000).toFixed(0)}M</p>
+                  <p className="text-xs text-muted-foreground">Spread</p>
+                  <p className="font-semibold text-sm">{data.spread.toFixed(3)}%</p>
                 </div>
               </div>
 
+              {/* Real-time Technical Indicators */}
               <div className="space-y-3">
-                {/* RSI Indicator */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">RSI (14)</span>
+                    <span className="text-xs text-muted-foreground">RSI (14) - Live</span>
                     <span
                       className={`text-xs font-medium ${
                         rsi > 70 ? "text-red-600" : rsi < 30 ? "text-green-600" : "text-yellow-600"
@@ -279,37 +326,32 @@ export async function TechnicalAnalysis() {
                       className={`h-1.5 rounded-full transition-all ${
                         rsi > 70 ? "bg-red-500" : rsi < 30 ? "bg-green-500" : "bg-yellow-500"
                       }`}
-                      style={{ width: `${rsi}%` }}
+                      style={{ width: `${Math.min(rsi, 100)}%` }}
                     />
                   </div>
                 </div>
 
-                {/* MACD Indicator */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">MACD</p>
+                    <p className="text-xs text-muted-foreground">MACD - Live</p>
                     <p className={`text-xs font-medium ${macd.macd > 0 ? "text-green-600" : "text-red-600"}`}>
-                      {macd.macd.toFixed(4)}
+                      {macd.macd.toFixed(6)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Signal</p>
                     <p className={`text-xs font-medium ${macd.signal > 0 ? "text-green-600" : "text-red-600"}`}>
-                      {macd.signal.toFixed(4)}
+                      {macd.signal.toFixed(6)}
                     </p>
                   </div>
                 </div>
 
-                {/* Parabolic SAR */}
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Parabolic SAR</span>
+                  <span className="text-xs text-muted-foreground">Bid/Ask Spread</span>
                   <div className="flex items-center gap-1">
-                    <Zap className={`h-3 w-3 ${sar.trend === "bullish" ? "text-green-600" : "text-red-600"}`} />
-                    <span
-                      className={`text-xs font-medium ${sar.trend === "bullish" ? "text-green-600" : "text-red-600"}`}
-                    >
-                      {sar.trend.toUpperCase()}
-                    </span>
+                    <span className="text-xs font-medium text-blue-600">${data.bid.toFixed(2)}</span>
+                    <span className="text-xs text-muted-foreground">/</span>
+                    <span className="text-xs font-medium text-red-600">${data.ask.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -317,23 +359,31 @@ export async function TechnicalAnalysis() {
               <div className="flex justify-between items-center mt-3 pt-3 border-t">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Target className="h-3 w-3" />
-                  Support: {formatPrice((coin.low24h || coin.currentPrice) * 0.95)}
+                  Data Points: {prices.length}
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Activity className="h-3 w-3" />
-                  Resistance: {formatPrice((coin.high24h || coin.currentPrice) * 1.05)}
+                  Updated: {new Date(data.lastUpdated).toLocaleTimeString()}
                 </div>
               </div>
             </div>
           )
         })}
 
+        {Object.keys(cryptoData).length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            {connectionStatus === "connected" ? "Waiting for real-time data..." : "Connecting to Coinbase WebSocket..."}
+          </div>
+        )}
+
         <div className="pt-4 border-t">
           <Button className="w-full bg-transparent" variant="outline">
             <BarChart3 className="mr-2 h-4 w-4" />
-            View Detailed Charts
+            View Advanced Charts
           </Button>
-          <p className="text-xs text-center text-muted-foreground mt-2">Real-time analysis • Updated every 5 minutes</p>
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            Real-time analysis • Live data from Coinbase Pro
+          </p>
         </div>
       </CardContent>
     </Card>
