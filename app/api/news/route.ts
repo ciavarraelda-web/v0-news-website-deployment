@@ -28,21 +28,29 @@ function detectCategory(title: string, description: string): string {
 
 export async function GET() {
   try {
+    const API_KEY = "aa53ba1f151d42f5bac01774e792e9ee"
     const queries = ["cryptocurrency", "bitcoin", "ethereum", "blockchain", "defi", "crypto market"]
 
     // Fetch from multiple queries to get diverse crypto news
     const newsPromises = queries.slice(0, 3).map((query) =>
-      fetch(
-        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`,
-        { next: { revalidate: 300 } }, // Cache for 5 minutes
-      ),
+      fetch(`https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=10&apiKey=${API_KEY}`, {
+        next: { revalidate: 300 },
+        headers: {
+          "User-Agent": "CryptoNewsHub/1.0",
+        },
+      }),
     )
 
     const responses = await Promise.all(newsPromises)
+    console.log(
+      "[v0] News API responses status:",
+      responses.map((r) => r.status),
+    )
 
     // Check if all requests were successful
     const failedRequests = responses.filter((response) => !response.ok)
     if (failedRequests.length === responses.length) {
+      console.error("[v0] All news API requests failed")
       throw new Error("All news API requests failed")
     }
 
@@ -51,6 +59,7 @@ export async function GET() {
     for (const response of responses) {
       if (response.ok) {
         const data = await response.json()
+        console.log("[v0] Fetched articles count:", data.articles?.length || 0)
         allArticles.push(...(data.articles || []))
       }
     }
