@@ -2,86 +2,181 @@ import { NextResponse } from "next/server"
 
 function detectCategory(title: string, description: string): string {
   const text = `${title} ${description}`.toLowerCase()
+
   if (text.includes("bitcoin") || text.includes("btc")) return "Bitcoin"
   if (text.includes("ethereum") || text.includes("eth") || text.includes("ether")) return "Ethereum"
-  if (text.includes("defi") || text.includes("decentralized")) return "DeFi"
-  if (text.includes("nft") || text.includes("non-fungible")) return "NFTs"
-  if (text.includes("regulation") || text.includes("sec")) return "Regulation"
-  if (text.includes("mining") || text.includes("proof of work")) return "Mining"
-  if (text.includes("staking") || text.includes("proof of stake")) return "Staking"
-  if (text.includes("exchange") || text.includes("trading")) return "Exchange"
-  if (text.includes("altcoin") || text.includes("token")) return "Altcoins"
-  if (text.includes("blockchain") || text.includes("layer 2")) return "Technology"
+  if (
+    text.includes("defi") ||
+    text.includes("decentralized finance") ||
+    text.includes("yield") ||
+    text.includes("liquidity")
+  )
+    return "DeFi"
+  if (text.includes("nft") || text.includes("non-fungible") || text.includes("opensea") || text.includes("collectible"))
+    return "NFTs"
+  if (text.includes("regulation") || text.includes("sec") || text.includes("government") || text.includes("legal"))
+    return "Regulation"
+  if (text.includes("mining") || text.includes("hash") || text.includes("proof of work")) return "Mining"
+  if (text.includes("staking") || text.includes("proof of stake") || text.includes("validator")) return "Staking"
+  if (text.includes("exchange") || text.includes("trading") || text.includes("binance") || text.includes("coinbase"))
+    return "Exchange"
+  if (text.includes("altcoin") || text.includes("token") || text.includes("coin")) return "Altcoins"
+  if (text.includes("blockchain") || text.includes("layer 2") || text.includes("scaling")) return "Technology"
+
   return "Crypto"
 }
 
 export async function GET() {
-  const NEWS_API_KEY = "pub_66f974315a164bc2aee52baed5ff04e1" // la tua chiave NewsAPI
-  const cryptoList = ["bitcoin", "ethereum", "cardano", "solana", "litecoin", "polkadot", "ripple"]
-
   try {
-    // 🔹 Fetch news da NewsAPI
-    const newsRes = await fetch(
-      `https://newsapi.org/v2/everything?q=cryptocurrency OR bitcoin OR ethereum OR defi OR nft&sortBy=publishedAt&pageSize=20&language=en&apiKey=${NEWS_API_KEY}`
+    const API_KEYS = [
+      "aa53ba1f151d42f5bac01774e792e9ee", // Primary NewsAPI key
+      "pub_916ff56267e04509b505898cb63f5ea7", // Additional NewsAPI key
+    ]
+
+    const queries = [
+      "cryptocurrency market",
+      "bitcoin price analysis",
+      "ethereum blockchain",
+      "defi protocol news",
+      "crypto regulation",
+      "blockchain technology",
+      "altcoin trading",
+      "nft marketplace",
+    ]
+
+    const newsPromises = queries.map((query, index) => {
+      const apiKey = API_KEYS[index % API_KEYS.length]
+      return fetch(
+        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=12&language=en&apiKey=${apiKey}`,
+        {
+          next: { revalidate: 180 },
+          headers: {
+            "User-Agent": "CryptoNewsHub/1.0",
+          },
+        },
+      )
+    })
+
+    const responses = await Promise.all(newsPromises)
+    console.log(
+      "[v0] News API responses status:",
+      responses.map((r) => r.status),
     )
-    const newsJson = await newsRes.json()
-    console.log("[news] raw:", newsJson)
 
-    const articles = (newsJson.articles || []).map((a: any) => ({
-      id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: a.title,
-      description: a.description || "",
-      image: a.urlToImage || "/placeholder.svg",
-      url: a.url,
-      source: a.source?.name || "Unknown",
-      publishedAt: a.publishedAt,
-      category: detectCategory(a.title, a.description),
-      author: a.author || "Unknown",
-      content: a.content || a.description,
-    }))
+    // Check if all requests were successful
+    const failedRequests = responses.filter((response) => !response.ok)
+    if (failedRequests.length === responses.length) {
+      console.error("[v0] All news API requests failed")
+      throw new Error("All news API requests failed")
+    }
 
-    // 🔹 Fetch dati di mercato da CoinGecko
-    const ids = cryptoList.join(",")
-    const marketRes = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
-    )
-    const marketJson = await marketRes.json()
-    console.log("[market] raw:", marketJson)
+    // Combine articles from all successful requests
+    const allArticles = []
+    for (const response of responses) {
+      if (response.ok) {
+        const data = await response.json()
+        console.log("[v0] Fetched articles count:", data.articles?.length || 0)
+        allArticles.push(...(data.articles || []))
+      }
+    }
 
-    const marketInfo = cryptoList.map((coin) => ({
-      id: coin,
-      price: marketJson[coin]?.usd || 0,
-      change24h: marketJson[coin]?.usd_24h_change || 0,
-      marketCap: marketJson[coin]?.usd_market_cap || 0,
-    }))
+    const seenUrls = new Set()
+    const articles = allArticles
+      .filter((article: any) => {
+        // Basic content validation
+        if (!article.title || !article.description || article.title.includes("[Removed]")) {
+          return false
+        }
+
+        // Remove duplicates based on URL
+        if (seenUrls.has(article.url)) {
+          return false
+        }
+        seenUrls.add(article.url)
+
+        // Filter for crypto-related content
+        const text = `${article.title} ${article.description}`.toLowerCase()
+        const cryptoKeywords = [
+          "crypto",
+          "bitcoin",
+          "ethereum",
+          "blockchain",
+          "defi",
+          "nft",
+          "altcoin",
+          "token",
+          "mining",
+          "staking",
+          "exchange",
+          "wallet",
+          "binance",
+          "coinbase",
+          "dogecoin",
+          "solana",
+          "cardano",
+          "polygon",
+          "chainlink",
+          "litecoin",
+          "ripple",
+          "ada",
+        ]
+
+        return cryptoKeywords.some((keyword) => text.includes(keyword))
+      })
+      .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 30)
+      .map((article: any, index: number) => ({
+        id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Better unique ID generation
+        title: article.title,
+        description: article.description,
+        image: article.urlToImage && article.urlToImage !== "null" ? article.urlToImage : null, // Better image validation
+        publishedAt: article.publishedAt,
+        source: article.source.name,
+        url: article.url,
+        category: detectCategory(article.title, article.description),
+        author: article.author,
+        content: article.content || article.description,
+        originalUrl: article.url,
+      }))
 
     return NextResponse.json({
       articles,
-      marketInfo,
+      totalResults: articles.length,
       lastUpdated: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("Errore fetching news/market:", error)
+    console.error("Error fetching news:", error)
 
-    // Fallback se qualcosa fallisce
     const fallbackArticles = [
       {
         id: "fallback-1",
-        title: "Crypto Markets Recover",
-        description: "Bitcoin and Ethereum are showing signs of recovery.",
-        image: "/bitcoin-concept.png",
-        url: "#",
-        source: "Crypto News Hub",
-        publishedAt: new Date().toISOString(),
+        title: "Crypto Markets Show Strong Recovery Amid Institutional Interest",
+        description:
+          "Major cryptocurrencies are experiencing significant gains as institutional investors continue to show increased interest in digital assets.",
+        image: "/crypto-market-recovery-chart.png",
         category: "Market",
-        author: "Market Team",
-        content: "The crypto market is recovering as investor confidence increases.",
+        publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+        source: "Crypto News Hub",
+        url: "#",
+        author: "Market Analysis Team",
+      },
+      {
+        id: "fallback-2",
+        title: "DeFi Protocol Launches Innovative Yield Strategy",
+        description:
+          "A new decentralized finance protocol has introduced a revolutionary approach to yield farming with enhanced security features.",
+        image: "/defi-protocol-interface.png",
+        category: "DeFi",
+        publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
+        source: "DeFi Weekly",
+        url: "#",
+        author: "DeFi Reporter",
       },
     ]
 
     return NextResponse.json({
       articles: fallbackArticles,
-      marketInfo: [],
+      totalResults: fallbackArticles.length,
       lastUpdated: new Date().toISOString(),
       fallback: true,
     })
