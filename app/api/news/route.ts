@@ -16,76 +16,74 @@ function detectCategory(title: string, description: string): string {
 }
 
 export async function GET() {
-  const API_KEY = "api_live_LEDqdwF4qtfM918XQ7RiRntBoIhQSnUHo0rs5IvKbKrpzR6PEyo6tivk"
-  let dataResults: any[] = []
+  const NEWS_API_KEY = "pub_66f974315a164bc2aee52baed5ff04e1"
+  const cryptoList = ["bitcoin", "ethereum", "cardano", "solana", "litecoin", "polkadot", "ripple"]
 
-  // 1️⃣ Proviamo l’endpoint /crypto
   try {
-    const res = await fetch(`https://newsdata.io/api/1/crypto?apikey=${API_KEY}&language=en&timeframe=24h`, {
-      headers: { "User-Agent": "CryptoNewsHub/1.0" },
-      cache: "no-store",
-    })
-    const json = await res.json()
-    console.log("[v0] /crypto status:", res.status, json.status || "")
-    if (res.ok && Array.isArray(json.results) && json.results.length) {
-      dataResults = json.results
-    } else {
-      console.warn("[v0] /crypto empty, fallback to generic search")
-      throw new Error("Crypto endpoint empty")
-    }
-  } catch (err) {
-    console.error("[v0] Error /crypto:", err.message)
-    // 2️⃣ fallback a /news
-    try {
-      const res2 = await fetch(`https://newsdata.io/api/1/news?apikey=${API_KEY}&q=cryptocurrency&language=en`, {
-        headers: { "User-Agent": "CryptoNewsHub/1.0" },
-        cache: "no-store",
-      })
-      const json2 = await res2.json()
-      console.log("[v0] /news search status:", res2.status, json2.status || "")
-      if (res2.ok && Array.isArray(json2.results) && json2.results.length) {
-        dataResults = json2.results
-      } else {
-        console.error("[v0] Generic search also failed")
-      }
-    } catch (err2) {
-      console.error("[v0] Error /news search:", err2.message)
-    }
-  }
+    // 🔹 Fetch news
+    const newsRes = await fetch(
+      `https://cryptonews-api.com/api/v1?tickers=BTC,ETH,ADA,SOL,LTC,DOT,XRP&items=30&token=${NEWS_API_KEY}`
+    )
+    const newsJson = await newsRes.json()
+    console.log("[news] raw:", newsJson)
 
-  // 🔹 Se non ci sono risultati
-  if (!dataResults.length) {
+    const articles = (newsJson.data || []).map((a: any) => ({
+      id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: a.title,
+      description: a.description,
+      image: a.image_url || "/placeholder.svg",
+      url: a.url,
+      source: a.source,
+      publishedAt: a.published_at,
+      category: detectCategory(a.title, a.description),
+      author: a.author || "Unknown",
+      content: a.content || a.description,
+    }))
+
+    // 🔹 Fetch market data (CoinGecko)
+    const ids = cryptoList.join(",")
+    const marketRes = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
+    )
+    const marketJson = await marketRes.json()
+    console.log("[market] raw:", marketJson)
+
+    const marketInfo = cryptoList.map((coin) => ({
+      id: coin,
+      price: marketJson[coin]?.usd || 0,
+      change24h: marketJson[coin]?.usd_24h_change || 0,
+      marketCap: marketJson[coin]?.usd_market_cap || 0,
+    }))
+
     return NextResponse.json({
-      articles: [],
-      totalResults: 0,
+      articles,
+      marketInfo,
+      lastUpdated: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Errore fetching news/market:", error)
+
+    // Fallback se l'API fallisce
+    const fallbackArticles = [
+      {
+        id: "fallback-1",
+        title: "Bitcoin Reaches New High",
+        description: "BTC price surges amid institutional interest.",
+        image: "/bitcoin-concept.png",
+        url: "#",
+        source: "Crypto News Hub",
+        publishedAt: new Date().toISOString(),
+        category: "Bitcoin",
+        author: "Market Team",
+        content: "Bitcoin is surging as more investors enter the market.",
+      },
+    ]
+
+    return NextResponse.json({
+      articles: fallbackArticles,
+      marketInfo: [],
       lastUpdated: new Date().toISOString(),
       fallback: true,
     })
   }
-
-  // 🔹 Mapping dei campi
-  const seen = new Set()
-  const articles = dataResults
-    .map((a: any) => ({
-      id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: a.title || "",
-      description: a.description || a.content || "No description",
-      image: a.image_url && a.image_url !== "null" ? a.image_url : null,
-      publishedAt: a.pubDate || new Date().toISOString(),
-      source: a.source_id || "Unknown",
-      url: a.link,
-      category: detectCategory(a.title || "", a.description || ""),
-      author: Array.isArray(a.creator) ? a.creator.join(", ") : a.creator || "Unknown",
-      content: a.content || a.description || a.title,
-      originalUrl: a.link,
-    }))
-    .filter(item => item.title && item.url && !seen.has(item.url) && seen.add(item.url))
-    .sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, 30)
-
-  return NextResponse.json({
-    articles,
-    totalResults: articles.length,
-    lastUpdated: new Date().toISOString(),
-  })
 }
