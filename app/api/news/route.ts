@@ -5,12 +5,7 @@ function detectCategory(title: string, description: string): string {
 
   if (text.includes("bitcoin") || text.includes("btc")) return "Bitcoin"
   if (text.includes("ethereum") || text.includes("eth") || text.includes("ether")) return "Ethereum"
-  if (
-    text.includes("defi") ||
-    text.includes("decentralized finance") ||
-    text.includes("yield") ||
-    text.includes("liquidity")
-  )
+  if (text.includes("defi") || text.includes("decentralized finance") || text.includes("yield") || text.includes("liquidity"))
     return "DeFi"
   if (text.includes("nft") || text.includes("non-fungible") || text.includes("opensea") || text.includes("collectible"))
     return "NFTs"
@@ -28,10 +23,12 @@ function detectCategory(title: string, description: string): string {
 
 export async function GET() {
   try {
-    const API_KEYS = [
-      "aa53ba1f151d42f5bac01774e792e9ee", // Primary NewsAPI key
-      "pub_916ff56267e04509b505898cb63f5ea7", // Additional NewsAPI key
+    const NEWSAPI_KEYS = [
+      "aa53ba1f151d42f5bac01774e792e9ee", // tua chiave
+      "pub_916ff56267e04509b505898cb63f5ea7", // extra
     ]
+
+    const NEWSDATA_KEY = "api_live_LEDqdwF4qtfM918XQ7RiRntBoIhQSnUHo0rs5IvKbKrpzR6PEyo6tivk"
 
     const queries = [
       "cryptocurrency market",
@@ -44,100 +41,73 @@ export async function GET() {
       "nft marketplace",
     ]
 
+    // 🔹 1. Provo con NewsAPI
     const newsPromises = queries.map((query, index) => {
-      const apiKey = API_KEYS[index % API_KEYS.length]
+      const apiKey = NEWSAPI_KEYS[index % NEWSAPI_KEYS.length]
       return fetch(
-        `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=12&language=en&apiKey=${apiKey}`,
-        {
-          next: { revalidate: 180 },
-          headers: {
-            "User-Agent": "CryptoNewsHub/1.0",
-          },
-        },
+        `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=12&language=en&apiKey=${apiKey}`,
+        { next: { revalidate: 180 } }
       )
     })
 
     const responses = await Promise.all(newsPromises)
-    console.log(
-      "[v0] News API responses status:",
-      responses.map((r) => r.status),
-    )
+    const successfulResponses = responses.filter((r) => r.ok)
 
-    // Check if all requests were successful
-    const failedRequests = responses.filter((response) => !response.ok)
-    if (failedRequests.length === responses.length) {
-      console.error("[v0] All news API requests failed")
-      throw new Error("All news API requests failed")
-    }
+    let allArticles: any[] = []
 
-    // Combine articles from all successful requests
-    const allArticles = []
-    for (const response of responses) {
-      if (response.ok) {
+    if (successfulResponses.length > 0) {
+      for (const response of successfulResponses) {
         const data = await response.json()
-        console.log("[v0] Fetched articles count:", data.articles?.length || 0)
         allArticles.push(...(data.articles || []))
+      }
+    } else {
+      console.warn("[v0] NewsAPI fallita, provo con NewsData.io")
+
+      // 🔹 2. Se NewsAPI fallisce → NewsData.io
+      const newsDataRes = await fetch(
+        `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&q=crypto&language=en&category=business,technology`
+      )
+
+      if (newsDataRes.ok) {
+        const data = await newsDataRes.json()
+        allArticles = (data.results || []).map((a: any) => ({
+          title: a.title,
+          description: a.description,
+          url: a.link,
+          urlToImage: a.image_url,
+          publishedAt: a.pubDate,
+          source: { name: a.source_id },
+          author: a.creator ? a.creator.join(", ") : "Unknown",
+          content: a.content,
+        }))
+      } else {
+        throw new Error("Nessuna API disponibile")
       }
     }
 
+    // 🔹 Pulizia e normalizzazione
     const seenUrls = new Set()
     const articles = allArticles
+      .filter((article: any) => article.title && article.description)
       .filter((article: any) => {
-        // Basic content validation
-        if (!article.title || !article.description || article.title.includes("[Removed]")) {
-          return false
-        }
-
-        // Remove duplicates based on URL
-        if (seenUrls.has(article.url)) {
-          return false
-        }
+        if (seenUrls.has(article.url)) return false
         seenUrls.add(article.url)
-
-        // Filter for crypto-related content
-        const text = `${article.title} ${article.description}`.toLowerCase()
-        const cryptoKeywords = [
-          "crypto",
-          "bitcoin",
-          "ethereum",
-          "blockchain",
-          "defi",
-          "nft",
-          "altcoin",
-          "token",
-          "mining",
-          "staking",
-          "exchange",
-          "wallet",
-          "binance",
-          "coinbase",
-          "dogecoin",
-          "solana",
-          "cardano",
-          "polygon",
-          "chainlink",
-          "litecoin",
-          "ripple",
-          "ada",
-        ]
-
-        return cryptoKeywords.some((keyword) => text.includes(keyword))
+        return true
       })
-      .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 30)
-      .map((article: any, index: number) => ({
-        id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Better unique ID generation
+      .map((article: any) => ({
+        id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         title: article.title,
         description: article.description,
-        image: article.urlToImage && article.urlToImage !== "null" ? article.urlToImage : null, // Better image validation
+        image: article.urlToImage || article.image || "/placeholder.svg",
         publishedAt: article.publishedAt,
-        source: article.source.name,
+        source: article.source?.name || article.source || "Unknown",
         url: article.url,
         category: detectCategory(article.title, article.description),
-        author: article.author,
+        author: article.author || "Unknown",
         content: article.content || article.description,
-        originalUrl: article.url,
       }))
+      .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 30)
 
     return NextResponse.json({
       articles,
@@ -147,36 +117,9 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching news:", error)
 
-    const fallbackArticles = [
-      {
-        id: "fallback-1",
-        title: "Crypto Markets Show Strong Recovery Amid Institutional Interest",
-        description:
-          "Major cryptocurrencies are experiencing significant gains as institutional investors continue to show increased interest in digital assets.",
-        image: "/crypto-market-recovery-chart.png",
-        category: "Market",
-        publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-        source: "Crypto News Hub",
-        url: "#",
-        author: "Market Analysis Team",
-      },
-      {
-        id: "fallback-2",
-        title: "DeFi Protocol Launches Innovative Yield Strategy",
-        description:
-          "A new decentralized finance protocol has introduced a revolutionary approach to yield farming with enhanced security features.",
-        image: "/defi-protocol-interface.png",
-        category: "DeFi",
-        publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-        source: "DeFi Weekly",
-        url: "#",
-        author: "DeFi Reporter",
-      },
-    ]
-
     return NextResponse.json({
-      articles: fallbackArticles,
-      totalResults: fallbackArticles.length,
+      articles: [],
+      totalResults: 0,
       lastUpdated: new Date().toISOString(),
       fallback: true,
     })
