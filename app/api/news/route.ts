@@ -1,134 +1,91 @@
 import { NextResponse } from "next/server"
 
-// Aggiungi cache per conservare gli ultimi articoli ricevuti
-let cachedArticles: any[] = []
-let lastFetchTime = 0
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minuti
-
 function detectCategory(title: string, description: string): string {
   const text = `${title} ${description}`.toLowerCase()
-  const categories = [
-    { keywords: ["bitcoin", "btc"], name: "Bitcoin" },
-    { keywords: ["ethereum", "eth", "ether"], name: "Ethereum" },
-    { keywords: ["defi", "decentralized finance", "yield", "liquidity"], name: "DeFi" },
-    { keywords: ["nft", "non-fungible", "opensea", "collectible"], name: "NFTs" },
-    { keywords: ["regulation", "sec", "government", "legal"], name: "Regulation" },
-    { keywords: ["mining", "hash", "proof of work"], name: "Mining" },
-    { keywords: ["staking", "proof of stake", "validator"], name: "Staking" },
-    { keywords: ["exchange", "trading", "binance", "coinbase"], name: "Exchange" },
-    { keywords: ["altcoin", "token", "coin"], name: "Altcoins" },
-    { keywords: ["blockchain", "layer 2", "scaling"], name: "Technology" }
-  ]
-
-  for (const category of categories) {
-    if (category.keywords.some(keyword => text.includes(keyword))) {
-      return category.name
-    }
-  }
-
+  if (text.includes("bitcoin") || text.includes("btc")) return "Bitcoin"
+  if (text.includes("ethereum") || text.includes("eth") || text.includes("ether")) return "Ethereum"
+  if (text.includes("defi") || text.includes("decentralized")) return "DeFi"
+  if (text.includes("nft") || text.includes("non-fungible")) return "NFTs"
+  if (text.includes("regulation") || text.includes("sec")) return "Regulation"
+  if (text.includes("mining") || text.includes("proof of work")) return "Mining"
+  if (text.includes("staking") || text.includes("proof of stake")) return "Staking"
+  if (text.includes("exchange") || text.includes("trading")) return "Exchange"
+  if (text.includes("altcoin") || text.includes("token")) return "Altcoins"
+  if (text.includes("blockchain") || text.includes("layer 2")) return "Technology"
   return "Crypto"
 }
 
 export async function GET() {
-  const currentTime = Date.now()
-  
-  // Usa la cache se ancora valida
-  if (currentTime - lastFetchTime < CACHE_DURATION && cachedArticles.length > 0) {
-    return NextResponse.json({
-      articles: cachedArticles,
-      totalResults: cachedArticles.length,
-      lastUpdated: new Date(lastFetchTime).toISOString(),
-      cached: true
+  const API_KEY = "api_live_LEDqdwF4qtfM918XQ7RiRntBoIhQSnUHo0rs5IvKbKrpzR6PEyo6tivk"
+  let dataResults: any[] = []
+
+  // 1️⃣ Proviamo l’endpoint /crypto
+  try {
+    const res = await fetch(`https://newsdata.io/api/1/crypto?apikey=${API_KEY}&language=en&timeframe=24h`, {
+      headers: { "User-Agent": "CryptoNewsHub/1.0" },
+      cache: "no-store",
     })
+    const json = await res.json()
+    console.log("[v0] /crypto status:", res.status, json.status || "")
+    if (res.ok && Array.isArray(json.results) && json.results.length) {
+      dataResults = json.results
+    } else {
+      console.warn("[v0] /crypto empty, fallback to generic search")
+      throw new Error("Crypto endpoint empty")
+    }
+  } catch (err) {
+    console.error("[v0] Error /crypto:", err.message)
+    // 2️⃣ fallback a /news
+    try {
+      const res2 = await fetch(`https://newsdata.io/api/1/news?apikey=${API_KEY}&q=cryptocurrency&language=en`, {
+        headers: { "User-Agent": "CryptoNewsHub/1.0" },
+        cache: "no-store",
+      })
+      const json2 = await res2.json()
+      console.log("[v0] /news search status:", res2.status, json2.status || "")
+      if (res2.ok && Array.isArray(json2.results) && json2.results.length) {
+        dataResults = json2.results
+      } else {
+        console.error("[v0] Generic search also failed")
+      }
+    } catch (err2) {
+      console.error("[v0] Error /news search:", err2.message)
+    }
   }
 
-  try {
-    const API_KEY = process.env.NEWSDATA_API_KEY || "your_api_key_here"
-
-    const res = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${API_KEY}&q=cryptocurrency OR bitcoin OR ethereum&language=en&category=business`,
-      {
-        next: { revalidate: 300 }, // 5 minutes
-        headers: {
-          "User-Agent": "CryptoNewsHub/1.0",
-        },
-      }
-    )
-
-    if (!res.ok) {
-      throw new Error(`API responded with status ${res.status}`)
-    }
-
-    const data = await res.json()
-    
-    const seenUrls = new Set()
-    const articles = (data.results || [])
-      .map((a: any) => ({
-        id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: a.title || "No title available",
-        description: a.description || a.content || "No description available",
-        image: a.image_url && a.image_url !== "null" ? a.image_url : null,
-        publishedAt: a.pubDate || new Date().toISOString(),
-        source: a.source_id || "NewsData.io",
-        url: a.link || "#",
-        category: detectCategory(a.title || "", a.description || ""),
-        author: a.creator ? a.creator.join(", ") : "Unknown",
-      }))
-      .filter((article: any) => {
-        if (!article.url || article.url === "#") return false
-        if (seenUrls.has(article.url)) return false
-        seenUrls.add(article.url)
-        return true
-      })
-      .sort((a: any, b: any) => 
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-      )
-      .slice(0, 30)
-
-    // Aggiorna cache
-    cachedArticles = articles
-    lastFetchTime = currentTime
-
+  // 🔹 Se non ci sono risultati
+  if (!dataResults.length) {
     return NextResponse.json({
-      articles,
-      totalResults: articles.length,
-      lastUpdated: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Error fetching news, using cached or fallback data:", error)
-
-    // Usa gli articoli in cache se disponibili, altrimenti fallback
-    const articlesToUse = cachedArticles.length > 0 ? cachedArticles : [
-      {
-        id: "fallback-1",
-        title: "Crypto Markets Show Strong Recovery",
-        description: "Major cryptocurrencies are experiencing significant gains as institutional investors continue to show interest.",
-        image: null,
-        category: "Market",
-        publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        source: "Crypto News Hub",
-        url: "#",
-        author: "Market Analysis Team",
-      },
-      {
-        id: "fallback-2",
-        title: "DeFi Protocol Launches Innovative Yield Strategy",
-        description: "A new decentralized finance protocol has introduced a revolutionary approach to yield farming.",
-        image: null,
-        category: "DeFi",
-        publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        source: "DeFi Weekly",
-        url: "#",
-        author: "DeFi Reporter",
-      },
-    ]
-
-    return NextResponse.json({
-      articles: articlesToUse,
-      totalResults: articlesToUse.length,
+      articles: [],
+      totalResults: 0,
       lastUpdated: new Date().toISOString(),
       fallback: true,
-      cached: cachedArticles.length > 0
     })
   }
+
+  // 🔹 Mapping dei campi
+  const seen = new Set()
+  const articles = dataResults
+    .map((a: any) => ({
+      id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: a.title || "",
+      description: a.description || a.content || "No description",
+      image: a.image_url && a.image_url !== "null" ? a.image_url : null,
+      publishedAt: a.pubDate || new Date().toISOString(),
+      source: a.source_id || "Unknown",
+      url: a.link,
+      category: detectCategory(a.title || "", a.description || ""),
+      author: Array.isArray(a.creator) ? a.creator.join(", ") : a.creator || "Unknown",
+      content: a.content || a.description || a.title,
+      originalUrl: a.link,
+    }))
+    .filter(item => item.title && item.url && !seen.has(item.url) && seen.add(item.url))
+    .sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .slice(0, 30)
+
+  return NextResponse.json({
+    articles,
+    totalResults: articles.length,
+    lastUpdated: new Date().toISOString(),
+  })
 }
