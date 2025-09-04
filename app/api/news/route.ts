@@ -1,40 +1,54 @@
 import { NextResponse } from "next/server"
 
+// Aggiungi cache per conservare gli ultimi articoli ricevuti
+let cachedArticles: any[] = []
+let lastFetchTime = 0
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minuti
+
 function detectCategory(title: string, description: string): string {
   const text = `${title} ${description}`.toLowerCase()
+  const categories = [
+    { keywords: ["bitcoin", "btc"], name: "Bitcoin" },
+    { keywords: ["ethereum", "eth", "ether"], name: "Ethereum" },
+    { keywords: ["defi", "decentralized finance", "yield", "liquidity"], name: "DeFi" },
+    { keywords: ["nft", "non-fungible", "opensea", "collectible"], name: "NFTs" },
+    { keywords: ["regulation", "sec", "government", "legal"], name: "Regulation" },
+    { keywords: ["mining", "hash", "proof of work"], name: "Mining" },
+    { keywords: ["staking", "proof of stake", "validator"], name: "Staking" },
+    { keywords: ["exchange", "trading", "binance", "coinbase"], name: "Exchange" },
+    { keywords: ["altcoin", "token", "coin"], name: "Altcoins" },
+    { keywords: ["blockchain", "layer 2", "scaling"], name: "Technology" }
+  ]
 
-  if (text.includes("bitcoin") || text.includes("btc")) return "Bitcoin"
-  if (text.includes("ethereum") || text.includes("eth") || text.includes("ether")) return "Ethereum"
-  if (
-    text.includes("defi") ||
-    text.includes("decentralized finance") ||
-    text.includes("yield") ||
-    text.includes("liquidity")
-  )
-    return "DeFi"
-  if (text.includes("nft") || text.includes("non-fungible") || text.includes("opensea") || text.includes("collectible"))
-    return "NFTs"
-  if (text.includes("regulation") || text.includes("sec") || text.includes("government") || text.includes("legal"))
-    return "Regulation"
-  if (text.includes("mining") || text.includes("hash") || text.includes("proof of work")) return "Mining"
-  if (text.includes("staking") || text.includes("proof of stake") || text.includes("validator")) return "Staking"
-  if (text.includes("exchange") || text.includes("trading") || text.includes("binance") || text.includes("coinbase"))
-    return "Exchange"
-  if (text.includes("altcoin") || text.includes("token") || text.includes("coin")) return "Altcoins"
-  if (text.includes("blockchain") || text.includes("layer 2") || text.includes("scaling")) return "Technology"
+  for (const category of categories) {
+    if (category.keywords.some(keyword => text.includes(keyword))) {
+      return category.name
+    }
+  }
 
   return "Crypto"
 }
 
 export async function GET() {
-  try {
-    const API_KEY = "api_live_LEDqdwF4qtfM918XQ7RiRntBoIhQSnUHo0rs5IvKbKrpzR6PEyo6tivk"
+  const currentTime = Date.now()
+  
+  // Usa la cache se ancora valida
+  if (currentTime - lastFetchTime < CACHE_DURATION && cachedArticles.length > 0) {
+    return NextResponse.json({
+      articles: cachedArticles,
+      totalResults: cachedArticles.length,
+      lastUpdated: new Date(lastFetchTime).toISOString(),
+      cached: true
+    })
+  }
 
-    // 🔹 Chiamata a NewsData.io (cripto in inglese, max 30 articoli)
+  try {
+    const API_KEY = process.env.NEWSDATA_API_KEY || "your_api_key_here"
+
     const res = await fetch(
       `https://newsdata.io/api/1/news?apikey=${API_KEY}&q=cryptocurrency OR bitcoin OR ethereum&language=en&category=business`,
       {
-        next: { revalidate: 180 },
+        next: { revalidate: 300 }, // 5 minutes
         headers: {
           "User-Agent": "CryptoNewsHub/1.0",
         },
@@ -42,38 +56,38 @@ export async function GET() {
     )
 
     if (!res.ok) {
-      console.error("[v0] NewsData.io API failed:", res.status, res.statusText)
-      throw new Error("Failed to fetch news")
+      throw new Error(`API responded with status ${res.status}`)
     }
 
     const data = await res.json()
-    console.log("[v0] NewsData.io articles:", data.results?.length || 0)
-
+    
     const seenUrls = new Set()
     const articles = (data.results || [])
       .map((a: any) => ({
         id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: a.title,
+        title: a.title || "No title available",
         description: a.description || a.content || "No description available",
         image: a.image_url && a.image_url !== "null" ? a.image_url : null,
         publishedAt: a.pubDate || new Date().toISOString(),
         source: a.source_id || "NewsData.io",
-        url: a.link,
+        url: a.link || "#",
         category: detectCategory(a.title || "", a.description || ""),
         author: a.creator ? a.creator.join(", ") : "Unknown",
-        content: a.content || a.description || a.title,
-        originalUrl: a.link,
       }))
-      // rimuovi duplicati per URL
-      .filter((article) => {
-        if (!article.url) return false
+      .filter((article: any) => {
+        if (!article.url || article.url === "#") return false
         if (seenUrls.has(article.url)) return false
         seenUrls.add(article.url)
         return true
       })
-      // ordina per data
-      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .sort((a: any, b: any) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      )
       .slice(0, 30)
+
+    // Aggiorna cache
+    cachedArticles = articles
+    lastFetchTime = currentTime
 
     return NextResponse.json({
       articles,
@@ -81,15 +95,15 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("Error fetching news:", error)
+    console.error("Error fetching news, using cached or fallback data:", error)
 
-    const fallbackArticles = [
+    // Usa gli articoli in cache se disponibili, altrimenti fallback
+    const articlesToUse = cachedArticles.length > 0 ? cachedArticles : [
       {
         id: "fallback-1",
-        title: "Crypto Markets Show Strong Recovery Amid Institutional Interest",
-        description:
-          "Major cryptocurrencies are experiencing significant gains as institutional investors continue to show increased interest in digital assets.",
-        image: "/crypto-market-recovery-chart.png",
+        title: "Crypto Markets Show Strong Recovery",
+        description: "Major cryptocurrencies are experiencing significant gains as institutional investors continue to show interest.",
+        image: null,
         category: "Market",
         publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         source: "Crypto News Hub",
@@ -99,9 +113,8 @@ export async function GET() {
       {
         id: "fallback-2",
         title: "DeFi Protocol Launches Innovative Yield Strategy",
-        description:
-          "A new decentralized finance protocol has introduced a revolutionary approach to yield farming with enhanced security features.",
-        image: "/defi-protocol-interface.png",
+        description: "A new decentralized finance protocol has introduced a revolutionary approach to yield farming.",
+        image: null,
         category: "DeFi",
         publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
         source: "DeFi Weekly",
@@ -111,10 +124,11 @@ export async function GET() {
     ]
 
     return NextResponse.json({
-      articles: fallbackArticles,
-      totalResults: fallbackArticles.length,
+      articles: articlesToUse,
+      totalResults: articlesToUse.length,
       lastUpdated: new Date().toISOString(),
       fallback: true,
+      cached: cachedArticles.length > 0
     })
   }
 }
