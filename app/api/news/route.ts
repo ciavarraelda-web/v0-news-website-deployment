@@ -16,31 +16,31 @@ function detectCategory(title: string, description: string): string {
 }
 
 export async function GET() {
-  const NEWS_API_KEY = "pub_66f974315a164bc2aee52baed5ff04e1"
+  const NEWS_API_KEY = "pub_66f974315a164bc2aee52baed5ff04e1" // la tua chiave NewsAPI
   const cryptoList = ["bitcoin", "ethereum", "cardano", "solana", "litecoin", "polkadot", "ripple"]
 
   try {
-    // 🔹 Fetch news
+    // 🔹 Fetch news da NewsAPI
     const newsRes = await fetch(
-      `https://cryptonews-api.com/api/v1?tickers=BTC,ETH,ADA,SOL,LTC,DOT,XRP&items=30&token=${NEWS_API_KEY}`
+      `https://newsapi.org/v2/everything?q=cryptocurrency OR bitcoin OR ethereum OR defi OR nft&sortBy=publishedAt&pageSize=20&language=en&apiKey=${NEWS_API_KEY}`
     )
     const newsJson = await newsRes.json()
     console.log("[news] raw:", newsJson)
 
-    const articles = (newsJson.data || []).map((a: any) => ({
+    const articles = (newsJson.articles || []).map((a: any) => ({
       id: `news-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: a.title,
-      description: a.description,
-      image: a.image_url || "/placeholder.svg",
+      description: a.description || "",
+      image: a.urlToImage || "/placeholder.svg",
       url: a.url,
-      source: a.source,
-      publishedAt: a.published_at,
+      source: a.source?.name || "Unknown",
+      publishedAt: a.publishedAt,
       category: detectCategory(a.title, a.description),
       author: a.author || "Unknown",
       content: a.content || a.description,
     }))
 
-    // 🔹 Fetch market data (CoinGecko)
+    // 🔹 Fetch dati di mercato da CoinGecko
     const ids = cryptoList.join(",")
     const marketRes = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
@@ -63,19 +63,19 @@ export async function GET() {
   } catch (error) {
     console.error("Errore fetching news/market:", error)
 
-    // Fallback se l'API fallisce
+    // Fallback se qualcosa fallisce
     const fallbackArticles = [
       {
         id: "fallback-1",
-        title: "Bitcoin Reaches New High",
-        description: "BTC price surges amid institutional interest.",
+        title: "Crypto Markets Recover",
+        description: "Bitcoin and Ethereum are showing signs of recovery.",
         image: "/bitcoin-concept.png",
         url: "#",
         source: "Crypto News Hub",
         publishedAt: new Date().toISOString(),
-        category: "Bitcoin",
+        category: "Market",
         author: "Market Team",
-        content: "Bitcoin is surging as more investors enter the market.",
+        content: "The crypto market is recovering as investor confidence increases.",
       },
     ]
 
