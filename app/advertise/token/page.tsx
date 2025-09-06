@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,7 +33,7 @@ export default function TokenAdvertisePage() {
 
     localStorage.setItem("tokenAdData", JSON.stringify(formData))
 
-    // Using the provided Coinbase Commerce link for token ads
+    // Coinbase Commerce link per ICO
     window.open("https://commerce.coinbase.com/checkout/468ff577-f533-4f7e-ae0c-d406dfd19869", "_blank")
 
     toast({
@@ -42,7 +41,6 @@ export default function TokenAdvertisePage() {
       description: "Complete your payment in the new tab. Your token will be uploaded after payment confirmation.",
     })
 
-    // Show success step
     setTimeout(() => {
       setStep(3)
     }, 2000)
@@ -78,7 +76,7 @@ export default function TokenAdvertisePage() {
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4">Advertise Your Token</h1>
-            <p className="text-muted-foreground">Get your token featured in our sidebar for 30 days</p>
+            <p className="text-muted-foreground">Get your ICO published and featured for 30 days</p>
           </div>
 
           {step === 1 && (
@@ -179,7 +177,7 @@ export default function TokenAdvertisePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  Payment - 100 USDC
+                  Payment - 5000 USDC
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -200,7 +198,7 @@ export default function TokenAdvertisePage() {
                       </div>
                       <div className="border-t pt-2 flex justify-between font-semibold">
                         <span>Total:</span>
-                        <span>100 USDC</span>
+                        <span>5000 USDC</span>
                       </div>
                     </div>
                   </div>
