@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+atCard, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, Star } from "lucide-react"
@@ -101,7 +101,7 @@ export async function TokenAds() {
           <Button className="w-full" variant="default" asChild>
             <Link href="/advertise">Advertise Your Token</Link>
           </Button>
-          <p className="text-xs text-center text-muted-foreground mt-2">Starting at 100 USDC</p>
+          <p className="text-xs text-center text-muted-foreground mt-2">Starting at 5000 USDC</p>
         </div>
       </CardContent>
     </Card>
