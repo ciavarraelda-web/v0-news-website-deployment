@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Newspaper, Zap } from "lucide-react"
+import { Newspaper, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 
 export function Navigation() {
@@ -22,6 +22,9 @@ export function Navigation() {
             <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition-colors">
               Analysis
             </Link>
+            <Link href="/exchange" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Exchange
+            </Link>
             <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition-colors">
               Portfolio
             </Link>
@@ -31,9 +34,9 @@ export function Navigation() {
           </div>
 
           <Button asChild>
-            <Link href="/advertise">
-              <Zap className="mr-2 h-4 w-4" />
-              Advertise
+            <Link href="/exchange">
+              <ArrowLeftRight className="mr-2 h-4 w-4" />
+              Exchange
             </Link>
           </Button>
         </div>

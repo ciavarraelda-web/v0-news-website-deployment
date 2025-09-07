@@ -26,7 +26,7 @@ export default function AdvertisePage() {
                 <Zap className="h-6 w-6 text-yellow-500" />
                 Token Icon Ads
               </CardTitle>
-              <div className="text-3xl font-bold">5000 USDC</div>
+              <div className="text-3xl font-bold">100 USDC</div>
               <p className="text-muted-foreground">Promote your token in our featured sidebar</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -73,7 +73,7 @@ export default function AdvertisePage() {
               <div className="p-4 border rounded-lg">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-semibold">3-Day Banner</h4>
-                  <div className="text-2xl font-bold">1000 USDC</div>
+                  <div className="text-2xl font-bold">100 USDC</div>
                 </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function AdvertisePage() {
                       Best Value
                     </Badge>
                   </div>
-                  <div className="text-2xl font-bold">1500 USDC</div>
+                  <div className="text-2xl font-bold">150 USDC</div>
                 </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">

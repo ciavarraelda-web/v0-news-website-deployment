@@ -5,13 +5,12 @@ import { ArrowLeft, Clock, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import type { Metadata } from "next"
 
 async function getArticle(id: string) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const response = await fetch(`${baseUrl}/api/news`, {
-      next: { revalidate: 180 }, // refresh API data every 3 minutes
+      next: { revalidate: 180 }, // Reduced cache time to match API
     })
 
     if (!response.ok) throw new Error("Failed to fetch news")
@@ -56,40 +55,6 @@ function getCategoryColor(category: string) {
   return colors[category] || "bg-gray-100 text-gray-700"
 }
 
-// ✅ Incremental Static Regeneration (refresh page every 60s)
-export const revalidate = 60
-
-// ✅ SEO metadata
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const article = await getArticle(params.id)
-
-  return {
-    title: article?.title || "Crypto News",
-    description:
-      article?.description || "Stay updated with the latest cryptocurrency news and market analysis.",
-    openGraph: {
-      title: article?.title,
-      description: article?.description,
-      type: "article",
-      url: `https://yourdomain.com/article/${params.id}`,
-      images: [
-        {
-          url: article?.image || "/placeholder.jpg",
-          width: 1200,
-          height: 630,
-          alt: article?.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: article?.title,
-      description: article?.description,
-      images: [article?.image || "/placeholder.jpg"],
-    },
-  }
-}
-
 export default async function ArticlePage({ params }: { params: { id: string } }) {
   const article = await getArticle(params.id)
 
@@ -97,37 +62,8 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     notFound()
   }
 
-  // ✅ JSON-LD schema for Google News
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: article.title,
-    description: article.description,
-    image: [`https://yourdomain.com${article.image}`],
-    datePublished: article.publishedAt,
-    dateModified: article.publishedAt,
-    author: {
-      "@type": "Person",
-      name: article.author || "Crypto News Hub",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Crypto News Hub",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://yourdomain.com/logo.png",
-      },
-    },
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* JSON-LD Schema */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
       <div className="mb-6">
         <Link href="/">
           <Button variant="ghost" className="mb-4">
@@ -141,16 +77,13 @@ export default async function ArticlePage({ params }: { params: { id: string } }
         <CardHeader className="p-0">
           <div className="relative h-64 md:h-96 w-full overflow-hidden rounded-t-lg">
             <Image
-              src={article.image || "/placeholder.jpg"}
+              src={article.image || "/placeholder.svg?height=400&width=800&query=crypto news"}
               alt={article.title}
               fill
               className="object-cover"
-              priority
             />
             <div className="absolute top-4 left-4">
-              <Badge className={`${getCategoryColor(article.category)} border-0`}>
-                {article.category}
-              </Badge>
+              <Badge className={`${getCategoryColor(article.category)} border-0`}>{article.category}</Badge>
             </div>
           </div>
         </CardHeader>
@@ -183,8 +116,37 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             <div className="space-y-6 text-foreground leading-relaxed">
               <p>
                 {article.content ||
-                  "The cryptocurrency market continues to evolve rapidly, with significant developments shaping the future of digital assets."}
+                  "The cryptocurrency market continues to evolve at a rapid pace, with significant developments shaping the future of digital assets. This latest development represents a crucial milestone in the ongoing maturation of the crypto ecosystem."}
               </p>
+
+              <p>
+                Market analysts are closely monitoring these trends as they could have far-reaching implications for
+                both institutional and retail investors. The growing adoption of cryptocurrency technologies across
+                various sectors demonstrates the increasing mainstream acceptance of digital assets.
+              </p>
+
+              <p>
+                Industry experts suggest that this development could pave the way for further innovation in the
+                blockchain space, potentially leading to new use cases and applications that could revolutionize
+                traditional financial systems.
+              </p>
+
+              <p>
+                As the regulatory landscape continues to evolve, market participants are adapting their strategies to
+                navigate the changing environment while capitalizing on emerging opportunities in the digital asset
+                space.
+              </p>
+
+              {article.category === "Bitcoin" || article.category === "Ethereum" || article.category === "Market" ? (
+                <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4">Technical Analysis</h3>
+                  <p>
+                    From a technical perspective, key support and resistance levels are being closely watched by
+                    traders. The current price action suggests potential for continued momentum, though market
+                    volatility remains a significant factor for short-term price movements.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
 

@@ -31,10 +31,11 @@ export default function BannerAdvertisePage() {
   }
 
   const getPrice = () => {
-    return formData.duration === "3" ? "1000" : "1500"
+    return formData.duration === "3" ? "100" : "150"
   }
 
   const getCoinbaseLink = () => {
+    // Using the provided Coinbase Commerce links
     if (formData.duration === "3") {
       return "https://commerce.coinbase.com/checkout/7b93a07f-f5c4-404f-98ad-3a99e604adde"
     } else {
@@ -43,12 +44,18 @@ export default function BannerAdvertisePage() {
   }
 
   const handlePayment = () => {
+    // Store form data in localStorage for after payment
     localStorage.setItem("bannerAdData", JSON.stringify(formData))
+
+    // Redirect to Coinbase Commerce
     window.open(getCoinbaseLink(), "_blank")
+
     toast({
       title: "Payment Initiated",
       description: "Complete your payment in the new tab. Your banner will be uploaded after payment confirmation.",
     })
+
+    // Show success step
     setTimeout(() => setStep(3), 2000)
   }
 
@@ -145,7 +152,7 @@ export default function BannerAdvertisePage() {
                         <Label htmlFor="3days" className="flex-1 cursor-pointer">
                           <div className="flex justify-between">
                             <span>3 Days Banner</span>
-                            <span className="font-bold">1000 USDC</span>
+                            <span className="font-bold">100 USDC</span>
                           </div>
                           <p className="text-sm text-muted-foreground">~150,000 total impressions</p>
                         </Label>
@@ -155,7 +162,7 @@ export default function BannerAdvertisePage() {
                         <Label htmlFor="7days" className="flex-1 cursor-pointer">
                           <div className="flex justify-between">
                             <span>7 Days Banner (Best Value)</span>
-                            <span className="font-bold">1500 USDC</span>
+                            <span className="font-bold">150 USDC</span>
                           </div>
                           <p className="text-sm text-muted-foreground">~350,000 total impressions</p>
                         </Label>

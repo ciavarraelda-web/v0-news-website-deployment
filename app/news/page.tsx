@@ -1,30 +1,6 @@
-import type { Metadata } from "next"
+import { NewsGrid } from "@/components/news-grid"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SearchFilters } from "@/components/search-filters"
-import { InfiniteNewsGrid } from "@/components/infinite-news-grid"
-
-export const revalidate = 60
-
-export const metadata: Metadata = {
-  title: "Cryptocurrency News | Latest Updates and Market Insights",
-  description:
-    "Stay updated with the latest cryptocurrency news, market analysis, regulations, and blockchain innovations.",
-  openGraph: {
-    title: "Cryptocurrency News | Latest Updates and Market Insights",
-    description:
-      "Stay updated with the latest cryptocurrency news, market analysis, regulations, and blockchain innovations.",
-    url: "https://yourdomain.com/news",
-    type: "website",
-    images: [{ url: "https://yourdomain.com/og-news.jpg", width: 1200, height: 630, alt: "Cryptocurrency News" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Cryptocurrency News | Latest Updates and Market Insights",
-    description:
-      "Stay updated with the latest cryptocurrency news, market analysis, regulations, and blockchain innovations.",
-    images: ["https://yourdomain.com/og-news.jpg"],
-  },
-}
+import { Badge } from "@/components/ui/badge"
 
 export default function NewsPage() {
   return (
@@ -37,19 +13,31 @@ export default function NewsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main grid */}
         <div className="lg:col-span-3">
-          <InfiniteNewsGrid />
+          <NewsGrid />
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Search & Filters</CardTitle>
+              <CardTitle className="text-lg">Categories</CardTitle>
             </CardHeader>
-            <CardContent>
-              <SearchFilters />
+            <CardContent className="space-y-2">
+              <Badge variant="outline" className="w-full justify-start">
+                Bitcoin
+              </Badge>
+              <Badge variant="outline" className="w-full justify-start">
+                Ethereum
+              </Badge>
+              <Badge variant="outline" className="w-full justify-start">
+                DeFi
+              </Badge>
+              <Badge variant="outline" className="w-full justify-start">
+                NFTs
+              </Badge>
+              <Badge variant="outline" className="w-full justify-start">
+                Regulation
+              </Badge>
             </CardContent>
           </Card>
         </div>
