@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { PriceTicker } from "@/components/price-ticker"
+import { CryptoPrices } from "@/components/crypto-prices"
 
 export const metadata: Metadata = {
   title: "Crypto News Hub",
@@ -53,6 +55,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }}
         />
       </head>
+      <nav className="flex items-center gap-4">
+  <div className="mr-4">
+    <PriceTicker />
+  </div>
+  <div className="hidden md:block">
+    <CryptoPrices compact />
+  </div>
+  <ThemeToggle />
+</nav>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {/* Topbar */}
