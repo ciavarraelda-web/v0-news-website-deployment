@@ -1,4 +1,4 @@
-import "./globals.css"
+importportport "./globals.css"
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import Link from "next/link"
@@ -67,6 +67,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {/* Topbar */}
+          <script src="/onesignal-sdk-loader.js"></script>
+<PushSubscribe />
           <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
             <div className="container mx-auto flex items-center justify-between px-4 py-3">
               <Link href="/" className="font-semibold tracking-tight">
