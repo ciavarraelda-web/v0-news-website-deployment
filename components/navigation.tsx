@@ -57,6 +57,8 @@ export function Navigation() {
               <Link href="/exchange" onClick={() => setMobileOpen(false)}>Exchange</Link>
               <Link href="/portfolio" onClick={() => setMobileOpen(false)}>Portfolio</Link>
               <Link href="/advertise" onClick={() => setMobileOpen(false)}>Advertise</Link>
+
+              {/* CTA button anche nel menu mobile */}
               <Button asChild onClick={() => setMobileOpen(false)}>
                 <Link href="/exchange">
                   <ArrowLeftRight className="mr-2 h-4 w-4" /> Exchange
