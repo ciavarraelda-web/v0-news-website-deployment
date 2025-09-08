@@ -5,32 +5,21 @@ import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
 import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { PriceTicker } from "@/components/price-ticker"
-import Exchange from "@/components/exchange"
+import { Exchange } from "@/components/exchange"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Hero />
-
-      {/* Button to go to the Exchange */}
-      <div className="flex justify-center mt-6 mb-4">
-        <a
-          href="https://www.cryptoico.eu/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition-colors"
-        >
-          Go to Exchange
-        </a>
-      </div>
-
       <Suspense fallback={<div className="h-12 bg-muted animate-pulse" />}>
         <PriceTicker />
       </Suspense>
-
+      
       {/* Exchange Section */}
       <div className="container mx-auto px-4 py-6">
-        <Exchange />
+        <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
+          <Exchange />
+        </Suspense>
       </div>
 
       {/* Top Banner Ad Space */}
