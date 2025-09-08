@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -59,7 +58,7 @@ export async function TokenAds() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-green-500" />
+          <span className="text-green-500">📈</span>
           Featured Tokens
         </CardTitle>
         <p className="text-sm text-muted-foreground">Discover promising crypto projects</p>
@@ -76,7 +75,7 @@ export async function TokenAds() {
                   height={40}
                   className="rounded-full"
                 />
-                {token.featured && <Star className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 fill-current" />}
+                {token.featured && <span className="absolute -top-1 -right-1 text-yellow-500">⭐</span>}
               </div>
 
               <div className="flex-1 min-w-0">

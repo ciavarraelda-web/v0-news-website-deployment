@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button"
-import { TrendingUp, Zap, Globe } from "lucide-react"
 import Link from "next/link"
 
 export function Hero() {
@@ -14,9 +13,9 @@ export function Hero() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/advertise">
-                <Zap className="mr-2 h-5 w-5" />
-                Advertise Your Token
+              <Link href="/exchange">
+                <span className="mr-2">⚡</span>
+                Start Trading
               </Link>
             </Button>
             <Button
@@ -26,7 +25,7 @@ export function Hero() {
               asChild
             >
               <Link href="/news">
-                <Globe className="mr-2 h-5 w-5" />
+                <span className="mr-2">🌐</span>
                 Browse All News
               </Link>
             </Button>
@@ -34,17 +33,17 @@ export function Hero() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <TrendingUp className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
+              <span className="text-4xl mb-3 block">📈</span>
               <h3 className="font-semibold mb-2">Real-time Updates</h3>
               <p className="text-sm text-blue-100">Get the latest crypto news as it happens</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <Zap className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
-              <h3 className="font-semibold mb-2">Token Advertising</h3>
-              <p className="text-sm text-blue-100">Promote your project to crypto enthusiasts</p>
+              <span className="text-4xl mb-3 block">⚡</span>
+              <h3 className="font-semibold mb-2">Cross-Chain Exchange</h3>
+              <p className="text-sm text-blue-100">Trade across 50+ blockchains with Li.Fi</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <Globe className="h-8 w-8 mx-auto mb-3 text-yellow-300" />
+              <span className="text-4xl mb-3 block">🌐</span>
               <h3 className="font-semibold mb-2">Global Coverage</h3>
               <p className="text-sm text-blue-100">News from markets around the world</p>
             </div>

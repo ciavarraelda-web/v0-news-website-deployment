@@ -1,4 +1,3 @@
-import { Newspaper } from "lucide-react"
 import Link from "next/link"
 
 export function Footer() {
@@ -8,11 +7,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-xl mb-4">
-              <Newspaper className="h-6 w-6 text-blue-600" />
+              <span className="text-blue-600">📰</span>
               Crypto News Hub
             </Link>
             <p className="text-sm text-muted-foreground">
-              Your trusted source for cryptocurrency news and project advertising.
+              Your trusted source for cryptocurrency news and cross-chain trading.
             </p>
           </div>
 

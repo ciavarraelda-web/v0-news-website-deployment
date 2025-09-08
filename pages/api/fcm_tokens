@@ -1,5 +1,0 @@
-create table fcm_tokens (
-  id uuid default uuid_generate_v4() primary key,
-  token text unique not null,
-  created_at timestamp with time zone default now()
-);
