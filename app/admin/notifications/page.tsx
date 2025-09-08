@@ -11,28 +11,32 @@ export default function NotificationsAdminPage() {
   const [body, setBody] = useState("")
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<any>(null)
+async function sendNotification(e: React.FormEvent) {
+  e.preventDefault()
+  setLoading(true)
+  setResponse(null)
 
-  async function sendNotification(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setResponse(null)
+  try {
+    const res = await fetch("/api/send-notification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_ADMIN_SECRET}`, // ⚠️ per demo
+      },
+      body: JSON.stringify({ title, body }),
+    })
 
-    try {
-      const res = await fetch("/api/send-notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body }),
-      })
-
-      const data = await res.json()
-      setResponse(data)
-    } catch (err) {
-      console.error(err)
-      setResponse({ error: "Request failed" })
-    } finally {
-      setLoading(false)
-    }
+    const data = await res.json()
+    setResponse(data)
+  } catch (err) {
+    console.error(err)
+    setResponse({ error: "Request failed" })
+  } finally {
+    setLoading(false)
   }
+}
+  
+  
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
