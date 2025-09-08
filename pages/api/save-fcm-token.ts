@@ -1,22 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from "next"
-
-let tokens: string[] = [] // ⚠️ solo in-memory, si resetta al riavvio
+import { supabase } from "@/lib/supabase"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
-    const { token } = req.body
-    if (!token) return res.status(400).json({ error: "Missing token" })
+  if (req.method !== "POST") return res.status(405).end()
 
-    if (!tokens.includes(token)) {
-      tokens.push(token)
-    }
+  const { token } = req.body
+  if (!token) return res.status(400).json({ error: "Missing token" })
 
-    return res.status(200).json({ success: true, tokens })
+  const { error } = await supabase
+    .from("fcm_tokens")
+    .upsert({ token }, { onConflict: "token" }) // evita duplicati
+
+  if (error) {
+    console.error(error)
+    return res.status(500).json({ error: "DB insert failed" })
   }
 
-  if (req.method === "GET") {
-    return res.status(200).json({ tokens })
-  }
-
-  return res.status(405).end()
+  return res.status(200).json({ success: true })
 }
