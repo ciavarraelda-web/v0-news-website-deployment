@@ -1,3 +1,4 @@
+// components/navigation.tsx
 "use client"
 
 import { useState } from "react"
@@ -20,27 +21,15 @@ export function Navigation() {
 
           {/* Menu Desktop */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              Home
-            </Link>
-            <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              News
-            </Link>
-            <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              Analysis
-            </Link>
-            <Link href="/exchange" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              Exchange
-            </Link>
-            <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              Portfolio
-            </Link>
-            <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition-colors">
-              Advertise
-            </Link>
+            <Link href="/" className="text-sm font-medium hover:text-blue-600 transition">Home</Link>
+            <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition">News</Link>
+            <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition">Analysis</Link>
+            <Link href="/exchange" className="text-sm font-medium hover:text-blue-600 transition">Exchange</Link>
+            <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition">Portfolio</Link>
+            <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition">Advertise</Link>
           </div>
 
-          {/* CTA Button Desktop */}
+          {/* CTA Exchange Button Desktop */}
           <div className="hidden md:block">
             <Button asChild>
               <Link href="/exchange">
@@ -50,7 +39,7 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Hamburger Menu Mobile */}
+          {/* Hamburger Menu (Mobile) */}
           <div className="md:hidden">
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -60,56 +49,17 @@ export function Navigation() {
 
         {/* Mobile Menu Overlay */}
         {mobileOpen && (
-          <div className="md:hidden border-t mt-2 bg-background">
-            <div className="flex flex-col p-4 space-y-4">
-              <Link
-                href="/"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/news"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                News
-              </Link>
-              <Link
-                href="/analysis"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                Analysis
-              </Link>
-              <Link
-                href="/exchange"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                Exchange
-              </Link>
-              <Link
-                href="/portfolio"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                Portfolio
-              </Link>
-              <Link
-                href="/advertise"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                Advertise
-              </Link>
-
-              {/* CTA button anche nel menu mobile */}
+          <div className="md:hidden border-t bg-background mt-2">
+            <div className="flex flex-col p-4 space-y-2">
+              <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
+              <Link href="/news" onClick={() => setMobileOpen(false)}>News</Link>
+              <Link href="/analysis" onClick={() => setMobileOpen(false)}>Analysis</Link>
+              <Link href="/exchange" onClick={() => setMobileOpen(false)}>Exchange</Link>
+              <Link href="/portfolio" onClick={() => setMobileOpen(false)}>Portfolio</Link>
+              <Link href="/advertise" onClick={() => setMobileOpen(false)}>Advertise</Link>
               <Button asChild onClick={() => setMobileOpen(false)}>
                 <Link href="/exchange">
-                  <ArrowLeftRight className="mr-2 h-4 w-4" />
-                  Exchange
+                  <ArrowLeftRight className="mr-2 h-4 w-4" /> Exchange
                 </Link>
               </Button>
             </div>
