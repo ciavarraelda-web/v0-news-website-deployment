@@ -5,6 +5,7 @@ import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
 import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { PriceTicker } from "@/components/price-ticker"
+import { Exchange } from "@/components/exchange" // <-- aggiunto import Exchange
 
 export default function HomePage() {
   return (
@@ -14,6 +15,13 @@ export default function HomePage() {
       <Suspense fallback={<div className="h-12 bg-muted animate-pulse" />}>
         <PriceTicker />
       </Suspense>
+
+      {/* Exchange Widget */}
+      <div className="container mx-auto px-4 py-6">
+        <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
+          <Exchange />
+        </Suspense>
+      </div>
 
       {/* Top Banner Ad Space */}
       <div className="container mx-auto px-4 py-4">
