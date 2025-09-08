@@ -123,3 +123,94 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== REGOLE PER NASCONDERE IL BRANDING JUMPER EXCHANGE ===== */
+/* Nascondi tutti gli elementi Jumper Exchange */
+[id*="jumper"], 
+[class*="jumper"], 
+[href*="jumper"], 
+[src*="jumper"],
+*:has(> [class*="jumper"]),
+*:has(> [id*="jumper"]),
+*:has(> [href*="jumper"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Rimuovi eventuali testi "Jumper" o "Powered by" */
+body *:not(script):not(style) {
+  position: relative;
+}
+
+body *:not(script):not(style)::after,
+body *:not(script):not(style)::before {
+  content: none !important;
+}
+
+/* Nascondi elementi per contenuto testuale */
+[class*="powered"],
+[class*="branding"],
+[id*="powered"],
+[id*="branding"] {
+  display: none !important;
+}
+
+/* Gestione specifica per iframe e elementi dinamici */
+iframe[src*="jumper"], 
+iframe[name*="jumper"] {
+  display: none !important;
+}
+
+/* Pulisci eventuali spazi vuoti lasciati dagli elementi rimossi */
+#jumper-widget {
+  overflow: hidden !important;
+  position: relative;
+}
+
+#jumper-widget > *:not(iframe) {
+  position: relative;
+}
+
+/* Stili per lo stato di caricamento */
+.jumper-loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Selettori specifici per elementi comuni di branding */
+div:contains("Jumper"),
+div:contains("jumper"),
+div:contains("Powered by"),
+a:contains("Jumper"),
+a:contains("jumper"),
+span:contains("Jumper"),
+span:contains("jumper") {
+  display: none !important;
+}
+
+/* Gestione di elementi con background immagini di branding */
+[style*="jumper"],
+[style*="Jumper"] {
+  background-image: none !important;
+}
