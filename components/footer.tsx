@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="bg-muted/50 border-t">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-xl mb-4">
               <span className="text-blue-600">📰</span>
@@ -29,6 +29,21 @@ export function Footer() {
               </Link>
               <Link href="/news/defi" className="block text-muted-foreground hover:text-foreground">
                 DeFi
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-4">Exchange</h3>
+            <div className="space-y-2 text-sm">
+              <Link href="/exchange" className="block text-muted-foreground hover:text-foreground">
+                Trade Tokens
+              </Link>
+              <Link href="/exchange#swap" className="block text-muted-foreground hover:text-foreground">
+                Token Swap
+              </Link>
+              <Link href="/exchange#bridge" className="block text-muted-foreground hover:text-foreground">
+                Cross-Chain Bridge
               </Link>
             </div>
           </div>
