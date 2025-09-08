@@ -1,86 +1,127 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Terminal } from "lucide-react"
 
 export default function ExchangePage() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const widgetInitialized = useRef(false)
 
   useEffect(() => {
     if (widgetInitialized.current) return
     widgetInitialized.current = true
 
-    const script = document.createElement("script")
-    script.src = "https://cdn.jsdelivr.net/gh/jumperexchange/jumper-exchange@latest/dist/jumper-exchange.js"
-    script.async = true
-    script.onload = () => {
-      if (window.JumperExchange) {
-        window.JumperExchange.init({
-          apiKey: "a46c5806-341b-46d0-906b-ab5ac5a64663.6375d829-f6f2-465f-aede-ba59bc4bae64",
-          theme: "light",
-          container: "#jumper-widget",
-          hideLogo: true,
-          hideBranding: true,
-          disableBranding: true
-        })
-
-        const removeJumperBranding = () => {
-          const brandingElements = document.querySelectorAll('*')
-          brandingElements.forEach(element => {
-            const className = element.className?.toString() || ''
-            const id = element.id?.toString() || ''
-            const text = element.textContent?.toLowerCase() || ''
-            
-            if (className.includes('jumper') || 
-                className.includes('Jumper') || 
-                id.includes('jumper') ||
-                text.includes('jumper') ||
-                text.includes('powered by')) {
-              element.style.display = 'none'
-              element.style.opacity = '0'
-              element.style.visibility = 'hidden'
-            }
-          })
-        }
-
-        removeJumperBranding()
-        const interval = setInterval(removeJumperBranding, 1000)
+    const loadJumperExchange = async () => {
+      try {
+        setLoading(true)
         
-        const observer = new MutationObserver(removeJumperBranding)
-        observer.observe(document.body, { 
-          childList: true, 
-          subtree: true,
-          attributes: true
-        })
-
-        return () => {
-          clearInterval(interval)
-          observer.disconnect()
+        // Controlla se lo script è già caricato
+        if (document.querySelector('script[src*="jumper-exchange"]')) {
+          console.log('Jumper Exchange script già caricato')
+          return
         }
+
+        const script = document.createElement("script")
+        script.src = "https://cdn.jsdelivr.net/gh/jumperexchange/jumper-exchange@latest/dist/jumper-exchange.js"
+        script.async = true
+        
+        script.onload = () => {
+          console.log('Jumper Exchange script caricato con successo')
+          
+          if (window.JumperExchange) {
+            window.JumperExchange.init({
+              apiKey: "a46c5806-341b-46d0-906b-ab5ac5a64663.6375d829-f6f2-465f-aede-ba59bc4bae64",
+              theme: "light",
+              container: "#jumper-widget",
+              hideLogo: true,
+              hideBranding: true,
+              disableBranding: true
+            })
+
+            // Funzione per rimuovere il branding
+            const removeJumperBranding = () => {
+              const elements = document.querySelectorAll('*')
+              elements.forEach(element => {
+                const className = element.className?.toString() || ''
+                const id = element.id?.toString() || ''
+                const text = element.textContent?.toLowerCase() || ''
+                
+                if (className.includes('jumper') || 
+                    className.includes('Jumper') || 
+                    id.includes('jumper') ||
+                    text.includes('jumper') ||
+                    text.includes('powered by')) {
+                  element.style.display = 'none'
+                  element.style.opacity = '0'
+                  element.style.visibility = 'hidden'
+                }
+              })
+            }
+
+            removeJumperBranding()
+            setLoading(false)
+            
+            // Controllo periodico
+            const interval = setInterval(removeJumperBranding, 1000)
+            
+            // Observer per modifiche DOM
+            const observer = new MutationObserver(removeJumperBranding)
+            observer.observe(document.body, { 
+              childList: true, 
+              subtree: true,
+              attributes: true
+            })
+
+            return () => {
+              clearInterval(interval)
+              observer.disconnect()
+            }
+          }
+        }
+
+        script.onerror = () => {
+          console.error("Errore nel caricamento di Jumper Exchange")
+          setError("Impossibile caricare il servizio di exchange. Riprova più tardi.")
+          setLoading(false)
+        }
+
+        document.head.appendChild(script)
+
+      } catch (err) {
+        console.error("Errore durante il caricamento:", err)
+        setError("Si è verificato un errore durante il caricamento.")
+        setLoading(false)
       }
     }
 
-    script.onerror = () => {
-      const widgetContainer = document.getElementById("jumper-widget")
-      if (widgetContainer) {
-        widgetContainer.innerHTML = `
-          <div style="text-align: center; padding: 2rem; color: #666;">
-            <h3>Servizio di scambio temporaneamente non disponibile</h3>
-            <p>Ci scusiamo per l'inconveniente. Riprova più tardi.</p>
-          </div>
-        `
-      }
-    }
-
-    document.head.appendChild(script)
+    loadJumperExchange()
 
     return () => {
-      if (document.head.contains(script)) {
+      // Pulizia
+      const script = document.querySelector('script[src*="jumper-exchange"]')
+      if (script) {
         document.head.removeChild(script)
       }
     }
   }, [])
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
+        <div className="container mx-auto px-4">
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Errore</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
@@ -101,11 +142,20 @@ export default function ExchangePage() {
                   Multi-Chain Exchange
                 </CardTitle>
                 <CardDescription>
-                  Interfaccia professionale per scambi cross-chain con raccolta automatica delle fee
+                  Interfaccia professionale per scambi cross-chain
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div id="jumper-widget" className="min-h-[600px] w-full" />
+                {loading && (
+                  <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+                <div 
+                  id="jumper-widget" 
+                  className="min-h-[600px] w-full" 
+                  style={{ display: loading ? 'none' : 'block' }}
+                />
               </CardContent>
             </Card>
           </div>
@@ -127,14 +177,7 @@ export default function ExchangePage() {
                   <span className="text-blue-600 text-lg">📈</span>
                   <div>
                     <h4 className="font-medium">Migliori Tassi</h4>
-                    <p className="text-sm text-gray-600">Ottieni i migliori tassi di scambio tra blockchain</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-yellow-600 text-lg">⚡</span>
-                  <div>
-                    <h4 className="font-medium">Transazioni Veloci</h4>
-                    <p className="text-sm text-gray-600">Tempi di elaborazione rapidi</p>
+                    <p className="text-sm text-gray-600">Ottieni i migliori tassi di scambio</p>
                   </div>
                 </div>
               </CardContent>
@@ -153,26 +196,6 @@ export default function ExchangePage() {
                   <Badge variant="secondary">Optimism</Badge>
                   <Badge variant="secondary">Avalanche</Badge>
                   <Badge variant="secondary">+ Altre</Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Informazioni</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Quote in Tempo Reale</span>
-                  <span className="text-green-600 font-medium">✓ Attivo</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Routing Multichain</span>
-                  <span className="text-green-600 font-medium">✓ Attivo</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Integrazione Wallet</span>
-                  <span className="text-green-600 font-medium">✓ Supportata</span>
                 </div>
               </CardContent>
             </Card>
