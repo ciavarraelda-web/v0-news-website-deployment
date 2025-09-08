@@ -11,7 +11,7 @@ export function PushSubscribe() {
     const t = await requestPermission()
     if (t) {
       setToken(t)
-      // TODO: send token to your backend (DB) to store subscriptions
+      // Salvalo sul tuo backend per inviare notifiche in futuro
       await fetch("/api/save-fcm-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
