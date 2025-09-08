@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import jwt from "jsonwebtoken"
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // proteggiamo solo le rotte admin
   if (pathname.startsWith("/admin")) {
-    const authHeader = req.headers.get("authorization")
-
-    // es: Authorization: Bearer SuperPasswordSegreta1503
-    if (authHeader === `Bearer ${process.env.ADMIN_SECRET}`) {
-      return NextResponse.next()
+    const token = req.cookies.get("admin_token")?.value
+    if (!token) {
+      return NextResponse.redirect(new URL("/admin/login", req.url))
     }
 
-    return new NextResponse("Unauthorized", { status: 401 })
+    try {
+      jwt.verify(token, process.env.JWT_SECRET!)
+      return NextResponse.next()
+    } catch (err) {
+      return NextResponse.redirect(new URL("/admin/login", req.url))
+    }
   }
 
   return NextResponse.next()
