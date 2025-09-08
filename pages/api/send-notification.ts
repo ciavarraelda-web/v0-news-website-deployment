@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import admin from "firebase-admin"
+import { supabase } from "@/lib/supabase"
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -15,14 +16,24 @@ const messaging = admin.messaging()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).end()
-  const { token, title, body } = req.body
+  const { title, body } = req.body
+
   try {
+    // Recupera tutti i token
+    const { data: tokens, error } = await supabase.from("fcm_tokens").select("token")
+    if (error) throw error
+
+    if (!tokens || tokens.length === 0) {
+      return res.status(200).json({ success: false, message: "No tokens registered" })
+    }
+
     const message = {
       notification: { title, body },
-      token,
+      tokens: tokens.map((t) => t.token),
     }
-    await messaging.send(message)
-    res.status(200).json({ success: true })
+
+    const response = await messaging.sendEachForMulticast(message)
+    res.status(200).json({ success: true, response })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Notification failed" })
