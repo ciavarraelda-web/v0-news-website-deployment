@@ -1,77 +1,121 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 export default function ExchangePage() {
+  const widgetInitialized = useRef(false)
+
   useEffect(() => {
-    // Load Li.Fi Widget script
+    // Evita di inizializzare il widget più volte
+    if (widgetInitialized.current) return
+    widgetInitialized.current = true
+
+    // Carica lo script di Jumper Exchange
     const script = document.createElement("script")
-    script.src = "https://unpkg.com/@lifi/widget@latest/dist/widget.umd.js"
+    script.src = "https://cdn.jsdelivr.net/gh/jumperexchange/jumper-exchange@latest/dist/jumper-exchange.js"
     script.async = true
     script.onload = () => {
-      // Initialize Li.Fi Widget with your fee collection API key
-      if (window.LiFi) {
-        const widget = window.LiFi.createWidget({
-          containerId: "lifi-widget",
-          config: {
-            theme: {
-              container: {
-                border: "1px solid rgb(234, 234, 234)",
-                borderRadius: "16px",
-                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-              },
-              palette: {
-                primary: { main: "#2563eb" },
-                secondary: { main: "#64748b" },
-              },
-            },
-            integrator: "crypto-news-hub",
-            fee: 0.005, // 0.5% fee goes to your wallet
-            apiKey: "a46c5806-341b-46d0-906b-ab5ac5a64663.6375d829-f6f2-465f-aede-ba59bc4bae64",
-            variant: "wide",
-            subvariant: "default",
-            walletManagement: {
-              signer: undefined,
-              connect: async () => {
-                alert("Please connect your Web3 wallet (MetaMask, WalletConnect, etc.) to start swapping!")
-                return null
-              },
-              disconnect: async () => {},
-            },
-            appearance: "light",
-            hiddenUI: [],
-            chains: {
-              allow: [1, 137, 56, 42161, 10, 43114, 250, 100, 1284, 1285, 25, 66, 128, 321, 1666600000],
-            },
-            tokens: {
-              featured: [
-                {
-                  address: "0xA0b86a33E6441b8C4505B6B8E4b5c8b6b5c8b6b5",
-                  symbol: "USDC",
-                  chainId: 1,
-                },
-                {
-                  address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-                  symbol: "USDT",
-                  chainId: 1,
-                },
-                {
-                  address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-                  symbol: "DAI",
-                  chainId: 1,
-                },
-              ],
-            },
-          },
+      // Inizializza Jumper Exchange con la tua API key per le fee
+      if (window.JumperExchange) {
+        window.JumperExchange.init({
+          apiKey: "a46c5806-341b-46d0-906b-ab5ac5a64663.6375d829-f6f2-465f-aede-ba59bc4bae64",
+          theme: "light",
+          container: "#jumper-widget",
+          hideLogo: true,
+          hideBranding: true
         })
+
+        // Funzione per rimuovere il branding di Jumper
+        const removeJumperBranding = () => {
+          // Rimuovi elementi per classe
+          const classesToRemove = ['jumper', 'Jumper', 'logo', 'brand', 'watermark', 'powered-by', 'footer']
+          classesToRemove.forEach(className => {
+            const elements = document.getElementsByClassName(className)
+            for (let i = 0; i < elements.length; i++) {
+              elements[i].style.display = 'none'
+              elements[i].style.opacity = '0'
+              elements[i].style.visibility = 'hidden'
+            }
+          })
+          
+          // Rimuovi elementi per ID
+          const idsToRemove = ['jumper', 'Jumper', 'logo', 'brand']
+          idsToRemove.forEach(idPart => {
+            const elements = document.querySelectorAll(`[id*="${idPart}"]`)
+            elements.forEach(el => {
+              el.style.display = 'none'
+              el.style.opacity = '0'
+              el.style.visibility = 'hidden'
+            })
+          })
+          
+          // Rimuovi elementi per attributo
+          const attributesToCheck = ['src', 'href']
+          attributesToCheck.forEach(attr => {
+            const elements = document.querySelectorAll(`[${attr}*="jumper"], [${attr}*="Jumper"], [${attr}*="logo"]`)
+            elements.forEach(el => {
+              el.style.display = 'none'
+              el.style.opacity = '0'
+              el.style.visibility = 'hidden'
+            })
+          })
+          
+          // Rimuovi elementi di testo che menzionano Jumper
+          const allElements = document.querySelectorAll('*:not(script):not(style)')
+          allElements.forEach(el => {
+            if (el.children.length === 0 && el.textContent) {
+              const text = el.textContent.toLowerCase()
+              if (text.includes('jumper') || text.includes('powered by')) {
+                el.style.display = 'none'
+                el.style.opacity = '0'
+                el.style.visibility = 'hidden'
+              }
+            }
+          })
+        }
+
+        // Esegui la rimozione iniziale
+        removeJumperBranding()
+        
+        // Controlla periodicamente per assicurarsi che il branding non riappaia
+        const intervalId = setInterval(removeJumperBranding, 2000)
+        
+        // Osserva le modifiche al DOM per elementi nuovi
+        const observer = new MutationObserver(removeJumperBranding)
+        observer.observe(document.body, { 
+          childList: true, 
+          subtree: true,
+          attributes: true,
+          characterData: true
+        })
+
+        // Pulisci alla rimozione del componente
+        return () => {
+          clearInterval(intervalId)
+          observer.disconnect()
+        }
       }
     }
+
+    script.onerror = () => {
+      console.error("Errore nel caricamento di Jumper Exchange")
+      document.getElementById("jumper-widget").innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: #666;">
+          <h3>Exchange temporaneamente non disponibile</h3>
+          <p>Ci scusiamo per l'inconveniente. Riprova più tardi.</p>
+        </div>
+      `
+    }
+
     document.head.appendChild(script)
 
     return () => {
-      document.head.removeChild(script)
+      // Pulisci lo script quando il componente viene smontato
+      if (document.head.contains(script)) {
+        document.head.removeChild(script)
+      }
     }
   }, [])
 
@@ -81,7 +125,7 @@ export default function ExchangePage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Cross-Chain Exchange</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional Li.Fi Widget integration - Real cross-chain swaps with automatic fee collection
+            Scambia token tra diverse blockchain in modo semplice e sicuro
           </p>
         </div>
 
@@ -91,12 +135,12 @@ export default function ExchangePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-blue-600">⚡</span>
-                  Li.Fi Cross-Chain Widget
+                  Multi-Chain Exchange
                 </CardTitle>
-                <CardDescription>Professional widget with real-time quotes and execution</CardDescription>
+                <CardDescription>Scambia token tra diverse blockchain con un'interfaccia intuitiva</CardDescription>
               </CardHeader>
               <CardContent>
-                <div id="lifi-widget" className="min-h-[600px] w-full" style={{ minHeight: "600px" }} />
+                <div id="jumper-widget" className="min-h-[600px] w-full" style={{ minHeight: "600px" }} />
               </CardContent>
             </Card>
           </div>
@@ -105,35 +149,35 @@ export default function ExchangePage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Professional Integration</CardTitle>
+                <CardTitle className="text-lg">Scambio Multichain</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
                   <span className="text-green-600 text-lg">🛡️</span>
                   <div>
-                    <h4 className="font-medium">Official Li.Fi Widget</h4>
-                    <p className="text-sm text-gray-600">Production-ready widget with full functionality</p>
+                    <h4 className="font-medium">Transazioni Sicure</h4>
+                    <p className="text-sm text-gray-600">Tutte le transazioni sono sicure e verificabili on-chain</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-blue-600 text-lg">📈</span>
                   <div>
-                    <h4 className="font-medium">Automatic Fee Collection</h4>
-                    <p className="text-sm text-gray-600">0.5% fees automatically collected to your wallet</p>
+                    <h4 className="font-medium">Migliori Tassi</h4>
+                    <p className="text-sm text-gray-600">Ottieni i migliori tassi di scambio tra le diverse blockchain</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-yellow-600 text-lg">⚡</span>
                   <div>
-                    <h4 className="font-medium">Real Execution</h4>
-                    <p className="text-sm text-gray-600">Users can connect wallets and execute real swaps</p>
+                    <h4 className="font-medium">Transazioni Veloci</h4>
+                    <p className="text-sm text-gray-600">Tempi di elaborazione rapidi per tutte le transazioni</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-purple-600 text-lg">🔗</span>
                   <div>
-                    <h4 className="font-medium">50+ Blockchains</h4>
-                    <p className="text-sm text-gray-600">All major networks and 50,000+ token pairs</p>
+                    <h4 className="font-medium">Multi-Blockchain</h4>
+                    <p className="text-sm text-gray-600">Supporto per tutte le principali blockchain e migliaia di token</p>
                   </div>
                 </div>
               </CardContent>
@@ -141,7 +185,7 @@ export default function ExchangePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Supported Networks</CardTitle>
+                <CardTitle className="text-lg">Blockchain Supportate</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -153,37 +197,35 @@ export default function ExchangePage() {
                   <Badge variant="secondary">Avalanche</Badge>
                   <Badge variant="secondary">Fantom</Badge>
                   <Badge variant="secondary">Gnosis</Badge>
-                  <Badge variant="secondary">Moonbeam</Badge>
-                  <Badge variant="secondary">Cronos</Badge>
-                  <Badge variant="secondary">+40 more</Badge>
+                  <Badge variant="secondary">+ Altre</Badge>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Widget Features</CardTitle>
+                <CardTitle className="text-lg">Caratteristiche</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Real-time Quotes</span>
-                  <span className="text-green-600 font-medium">✓ Active</span>
+                  <span className="text-gray-600">Quote in Tempo Reale</span>
+                  <span className="text-green-600 font-medium">✓ Attivo</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Cross-chain Routing</span>
-                  <span className="text-green-600 font-medium">✓ Active</span>
+                  <span className="text-gray-600">Routing Multichain</span>
+                  <span className="text-green-600 font-medium">✓ Attivo</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Wallet Integration</span>
-                  <span className="text-green-600 font-medium">✓ Ready</span>
+                  <span className="text-gray-600">Integrazione Wallet</span>
+                  <span className="text-green-600 font-medium">✓ Pronto</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Fee Collection</span>
-                  <span className="text-green-600 font-medium">✓ 0.5%</span>
+                  <span className="text-gray-600">Interfaccia Intuitiva</span>
+                  <span className="text-green-600 font-medium">✓ Si</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Transaction History</span>
-                  <span className="text-green-600 font-medium">✓ Built-in</span>
+                  <span className="text-gray-600">Cronologia Transazioni</span>
+                  <span className="text-green-600 font-medium">✓ Integrata</span>
                 </div>
               </CardContent>
             </Card>
@@ -192,15 +234,4 @@ export default function ExchangePage() {
       </div>
     </div>
   )
-}
-
-declare global {
-  interface Window {
-    LiFi: {
-      createWidget: (options: {
-        containerId: string
-        config: any
-      }) => any
-    }
-  }
 }
