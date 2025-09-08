@@ -5,7 +5,7 @@ import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
 import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { PriceTicker } from "@/components/price-ticker"
-import { Exchange } from "@/components/exchange"
+import Exchange from "@/components/exchange" // <--- questo è l'import corretto!
 
 export default function HomePage() {
   return (
