@@ -47,7 +47,16 @@ export default function ExchangePage() {
     }
     setLoading(false)
   }
+// app/exchange/page.tsx (server component)
+import ExchangeClient from './components/ExchangeClient';
 
+export const metadata = {
+  title: 'Exchange | CryptoICO',
+};
+
+export default function ExchangePage() {
+  return <ExchangeClient />;
+}
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
