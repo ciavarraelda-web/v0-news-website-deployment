@@ -1,4 +1,3 @@
-import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
@@ -7,7 +6,6 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Suspense } from "react"
 import "./globals.css"
-import FloatingActionButton from '@/components/FloatingActionButton'
 
 export const metadata: Metadata = {
   title: "Crypto News Hub - Latest Cryptocurrency News & Token Advertising",
@@ -28,7 +26,6 @@ export default function RootLayout({
           {children}
           <Footer />
           <Toaster />
-          <FloatingActionButton />
         </Suspense>
       </body>
     </html>
