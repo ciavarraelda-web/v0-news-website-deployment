@@ -5,7 +5,7 @@ import { TokenAds } from "@/components/token-ads"
 import { Hero } from "@/components/hero"
 import { AdvancedMarketAnalysis } from "@/components/advanced-market-analysis"
 import { PriceTicker } from "@/components/price-ticker"
-import { Exchange } from "@/components/exchange"
+import { Exchange } from "@/components/exchange" // Import aggiunto
 
 export default function HomePage() {
   return (
@@ -15,7 +15,7 @@ export default function HomePage() {
         <PriceTicker />
       </Suspense>
       
-      {/* Exchange Section */}
+      {/* Sezione Exchange aggiunta qui */}
       <div className="container mx-auto px-4 py-6">
         <Suspense fallback={<div className="h-96 bg-muted animate-pulse rounded-lg" />}>
           <Exchange />
