@@ -8,39 +8,27 @@ import { Footer } from "@/components/footer"
 import { Suspense } from "react"
 import "./globals.css"
 import FloatingActionButton from '@/components/FloatingActionButton'
+
 export const metadata: Metadata = {
   title: "Crypto News Hub - Latest Cryptocurrency News & Token Advertising",
-  description:
-    "Stay updated with the latest cryptocurrency news, market analysis, and advertise your crypto projects to thousands of enthusiasts.",
+  description: "Stay updated with the latest cryptocurrency news, market analysis, and advertise your crypto projects to thousands of enthusiasts.",
   generator: "v0.app",
 }
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="it">
-      <body>
-        {children}
-        <FloatingActionButton />
-      </body>
-    </html>
-  )
-}
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  return (
-    <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="it" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className="font-sans">
         <Suspense fallback={<div>Loading...</div>}>
           <Navigation />
           {children}
           <Footer />
           <Toaster />
+          <FloatingActionButton />
         </Suspense>
       </body>
     </html>
