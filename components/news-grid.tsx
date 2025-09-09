@@ -1,94 +1,59 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Wifi, WifiOff } from "lucide-react"
+import { Clock, Wifi, WifiOff, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useState, useEffect } from "react"
 
-async function getNews() {
-  try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+// Mock data per quando l'API non è disponibile
+const mockNews = [
+  {
+    id: "fallback-1",
+    title: "Bitcoin Reaches New All-Time High Amid Institutional Adoption",
+    description: "Major cryptocurrency Bitcoin has surged to unprecedented levels as institutional investors continue to embrace digital assets.",
+    image: "/placeholder.svg?height=400&width=600&text=Crypto+News",
+    category: "Bitcoin",
+    publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    source: "Crypto News Hub",
+    url: "#",
+    author: "Market Analysis Team",
+  },
+  {
+    id: "fallback-2",
+    title: "Ethereum 2.0 Staking Rewards Attract Record Participation",
+    description: "The Ethereum network sees unprecedented staking activity as validators lock up ETH to secure the network.",
+    image: "/placeholder.svg?height=400&width=600&text=Ethereum+News",
+    category: "Ethereum",
+    publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    source: "DeFi Weekly",
+    url: "#",
+    author: "Ethereum Reporter",
+  },
+  {
+    id: "fallback-3",
+    title: "DeFi Protocols Report Record Total Value Locked",
+    description: "Decentralized Finance protocols across multiple blockchains have reached new milestones in total value locked.",
+    image: "/placeholder.svg?height=400&width=600&text=DeFi+News",
+    category: "DeFi",
+    publishedAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    source: "DeFi Pulse",
+    url: "#",
+    author: "DeFi Analyst",
+  },
+];
 
-    console.log("[v0] Fetching news from:", `${baseUrl}/api/news`)
+function formatTimeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-    const response = await fetch(`${baseUrl}/api/news`, {
-      next: { revalidate: 300 }, // Cache for 5 minutes
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-
-    console.log("[v0] News API response status:", response.status)
-
-    if (!response.ok) {
-      console.error("[v0] News API failed:", response.statusText)
-      throw new Error(`Failed to fetch news: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    console.log("[v0] News data received:", data.articles?.length || 0, "articles")
-    return data
-  } catch (error) {
-    console.error("[v0] Error fetching news:", error)
-    return {
-      articles: [
-        {
-          id: "fallback-1",
-          title: "Bitcoin Reaches New All-Time High Amid Institutional Adoption",
-          description:
-            "Major cryptocurrency Bitcoin has surged to unprecedented levels as institutional investors continue to embrace digital assets, signaling a new era of mainstream crypto adoption.",
-          image: "/bitcoin-concept.png",
-          category: "Bitcoin",
-          publishedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          source: "Crypto News Hub",
-          url: "#",
-          author: "Market Analysis Team",
-        },
-        {
-          id: "fallback-2",
-          title: "Ethereum 2.0 Staking Rewards Attract Record Participation",
-          description:
-            "The Ethereum network sees unprecedented staking activity as validators lock up ETH to secure the network and earn rewards, demonstrating strong confidence in the platform's future.",
-          image: "/ethereum-abstract.png",
-          category: "Ethereum",
-          publishedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-          source: "DeFi Weekly",
-          url: "#",
-          author: "Ethereum Reporter",
-        },
-        {
-          id: "fallback-3",
-          title: "DeFi Protocols Report Record Total Value Locked",
-          description:
-            "Decentralized Finance protocols across multiple blockchains have reached new milestones in total value locked, indicating growing trust and adoption in DeFi ecosystems.",
-          image: "/defi-protocol-dashboard.png",
-          category: "DeFi",
-          publishedAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-          source: "DeFi Pulse",
-          url: "#",
-          author: "DeFi Analyst",
-        },
-      ],
-      totalResults: 3,
-      fallback: true,
-      lastUpdated: new Date().toISOString(),
-    }
-  }
+  if (diffInHours < 1) return "Just now";
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  return `${Math.floor(diffInHours / 24)}d ago`;
 }
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-
-  if (diffInHours < 1) return "Just now"
-  if (diffInHours < 24) return `${diffInHours}h ago`
-  return `${Math.floor(diffInHours / 24)}d ago`
-}
-
-function getCategoryColor(category: string) {
-  const colors: { [key: string]: string } = {
+function getCategoryColor(category) {
+  const colors = {
     Bitcoin: "bg-orange-100 text-orange-700",
     Ethereum: "bg-blue-100 text-blue-700",
     DeFi: "bg-purple-100 text-purple-700",
@@ -100,13 +65,114 @@ function getCategoryColor(category: string) {
     Altcoins: "bg-teal-100 text-teal-700",
     Technology: "bg-gray-100 text-gray-700",
     Market: "bg-emerald-100 text-emerald-700",
-  }
-  return colors[category] || "bg-gray-100 text-gray-700"
+  };
+  return colors[category] || "bg-gray-100 text-gray-700";
 }
 
-export async function NewsGrid() {
-  const newsData = await getNews()
-  const { articles, totalResults, fallback, lastUpdated } = newsData
+export function NewsGrid() {
+  const [newsData, setNewsData] = useState({ articles: [], totalResults: 0, fallback: false });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchNews() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Prova a recuperare i dati dall'API
+        const response = await fetch('/api/news', {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Se l'API non restituisce articoli, usa i dati mock
+        if (!data.articles || data.articles.length === 0) {
+          setNewsData({
+            articles: mockNews,
+            totalResults: mockNews.length,
+            fallback: true,
+            lastUpdated: new Date().toISOString()
+          });
+        } else {
+          setNewsData({
+            ...data,
+            fallback: false,
+            lastUpdated: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching news:", err);
+        setError(err.message);
+        // In caso di errore, usa i dati mock
+        setNewsData({
+          articles: mockNews,
+          totalResults: mockNews.length,
+          fallback: true,
+          lastUpdated: new Date().toISOString()
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchNews();
+  }, []);
+
+  const { articles, totalResults, fallback, lastUpdated } = newsData;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold">Latest Crypto News</h2>
+          <Badge variant="secondary" className="text-sm flex items-center gap-1">
+            <Wifi className="h-3 w-3" />
+            Loading...
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="h-48 bg-muted rounded-t-lg"></div>
+              <CardContent className="p-6">
+                <div className="h-6 bg-muted rounded mb-3"></div>
+                <div className="h-4 bg-muted rounded mb-4"></div>
+                <div className="h-4 bg-muted rounded w-2/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error && articles.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold">Latest Crypto News</h2>
+          <Badge variant="outline" className="text-sm flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Connection Error
+          </Badge>
+        </div>
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+          <h3 className="text-lg font-semibold mb-2">Failed to Load News</h3>
+          <p className="text-muted-foreground mb-4">Error: {error}</p>
+          <p className="text-muted-foreground">Please check your API endpoint or try again later.</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -142,9 +208,9 @@ export async function NewsGrid() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {articles.map((article: any) => (
+          {articles.map((article) => (
             <Card key={article.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
-              <Link href={`/article/${article.id}`}>
+              <Link href={article.url || "#"}>
                 <CardHeader className="p-0">
                   <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                     <Image
@@ -152,9 +218,14 @@ export async function NewsGrid() {
                       alt={article.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.src = "/placeholder.svg?height=400&width=600&query=crypto news";
+                      }}
                     />
                     <div className="absolute top-3 left-3">
-                      <Badge className={`${getCategoryColor(article.category)} border-0`}>{article.category}</Badge>
+                      <Badge className={`${getCategoryColor(article.category)} border-0`}>
+                        {article.category}
+                      </Badge>
                     </div>
                   </div>
                 </CardHeader>
@@ -172,7 +243,9 @@ export async function NewsGrid() {
                       <span>{article.source}</span>
                     </div>
                   </div>
-                  {article.author && <div className="mt-2 text-xs text-muted-foreground">By {article.author}</div>}
+                  {article.author && (
+                    <div className="mt-2 text-xs text-muted-foreground">By {article.author}</div>
+                  )}
                 </CardContent>
               </Link>
             </Card>
@@ -180,5 +253,5 @@ export async function NewsGrid() {
         </div>
       )}
     </div>
-  )
+  );
 }
