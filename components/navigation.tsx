@@ -1,4 +1,3 @@
-// components/navigation.tsx
 "use client"
 
 import { useState } from "react"
@@ -21,13 +20,23 @@ export function Navigation() {
 
           {/* Menu Desktop */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium hover:text-blue-600 transition">Home</Link>
-            <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition">News</Link>
-            <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition">Analysis</Link>
-            <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition">Portfolio</Link>
-            <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition">Advertise</Link>
+            <Link href="/" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Home
+            </Link>
+            <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              News
+            </Link>
+            <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Analysis
+            </Link>
+            <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Portfolio
+            </Link>
+            <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              Advertise
+            </Link>
             
-            {/* Pulsante Exchange nel menu desktop */}
+            {/* Pulsante Exchange */}
             <Link 
               href="/exchange" 
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -36,7 +45,7 @@ export function Navigation() {
             </Link>
           </div>
 
-          {/* CTA Exchange Button Desktop - Versione con icona */}
+          {/* CTA Exchange Button Desktop */}
           <div className="hidden md:block">
             <Button asChild>
               <Link href="/exchange">
@@ -58,16 +67,26 @@ export function Navigation() {
         {mobileOpen && (
           <div className="md:hidden border-t bg-background mt-2">
             <div className="flex flex-col p-4 space-y-2">
-              <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
-              <Link href="/news" onClick={() => setMobileOpen(false)}>News</Link>
-              <Link href="/analysis" onClick={() => setMobileOpen(false)}>Analysis</Link>
-              <Link href="/portfolio" onClick={() => setMobileOpen(false)}>Portfolio</Link>
-              <Link href="/advertise" onClick={() => setMobileOpen(false)}>Advertise</Link>
-
-              {/* Pulsante Exchange nel menu mobile */}
+              <Link href="/" onClick={() => setMobileOpen(false)} className="py-2">
+                Home
+              </Link>
+              <Link href="/news" onClick={() => setMobileOpen(false)} className="py-2">
+                News
+              </Link>
+              <Link href="/analysis" onClick={() => setMobileOpen(false)} className="py-2">
+                Analysis
+              </Link>
+              <Link href="/portfolio" onClick={() => setMobileOpen(false)} className="py-2">
+                Portfolio
+              </Link>
+              <Link href="/advertise" onClick={() => setMobileOpen(false)} className="py-2">
+                Advertise
+              </Link>
+              
+              {/* Pulsante Exchange mobile */}
               <Link 
                 href="/exchange" 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center mt-2"
                 onClick={() => setMobileOpen(false)}
               >
                 Exchange
