@@ -24,12 +24,19 @@ export function Navigation() {
             <Link href="/" className="text-sm font-medium hover:text-blue-600 transition">Home</Link>
             <Link href="/news" className="text-sm font-medium hover:text-blue-600 transition">News</Link>
             <Link href="/analysis" className="text-sm font-medium hover:text-blue-600 transition">Analysis</Link>
-            <Link href="/exchange" className="text-sm font-medium hover:text-blue-600 transition">Exchange</Link>
             <Link href="/portfolio" className="text-sm font-medium hover:text-blue-600 transition">Portfolio</Link>
             <Link href="/advertise" className="text-sm font-medium hover:text-blue-600 transition">Advertise</Link>
+            
+            {/* Pulsante Exchange nel menu desktop */}
+            <Link 
+              href="/exchange" 
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Exchange
+            </Link>
           </div>
 
-          {/* CTA Exchange Button Desktop */}
+          {/* CTA Exchange Button Desktop - Versione con icona */}
           <div className="hidden md:block">
             <Button asChild>
               <Link href="/exchange">
@@ -54,16 +61,17 @@ export function Navigation() {
               <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
               <Link href="/news" onClick={() => setMobileOpen(false)}>News</Link>
               <Link href="/analysis" onClick={() => setMobileOpen(false)}>Analysis</Link>
-              <Link href="/exchange" onClick={() => setMobileOpen(false)}>Exchange</Link>
               <Link href="/portfolio" onClick={() => setMobileOpen(false)}>Portfolio</Link>
               <Link href="/advertise" onClick={() => setMobileOpen(false)}>Advertise</Link>
 
-              {/* CTA button anche nel menu mobile */}
-              <Button asChild onClick={() => setMobileOpen(false)}>
-                <Link href="/exchange">
-                  <ArrowLeftRight className="mr-2 h-4 w-4" /> Exchange
-                </Link>
-              </Button>
+              {/* Pulsante Exchange nel menu mobile */}
+              <Link 
+                href="/exchange" 
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center"
+                onClick={() => setMobileOpen(false)}
+              >
+                Exchange
+              </Link>
             </div>
           </div>
         )}
